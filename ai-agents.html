@@ -1,0 +1,1843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Agents — The Complete Technical Deep Dive</title>
+<style>
+/*
+╔══════════════════════════════════════════════════════════════════╗
+║  HOW TO EDIT THIS PRESENTATION                                  ║
+╠══════════════════════════════════════════════════════════════════╣
+║                                                                  ║
+║  1. EDIT SLIDE CONTENT:                                          ║
+║     - Search for "S0:", "S1:", "S2:"... to find each slide       ║
+║     - Each slide is a function returning HTML string             ║
+║     - Just edit the text inside the quotes                       ║
+║     - Example: change "AI Agents" to "My Custom Title"           ║
+║                                                                  ║
+║  2. ADD A NEW SLIDE:                                             ║
+║     - Copy any existing slide function                           ║
+║     - Add it to the slides[] array                               ║
+║     - Add a time entry to the times[] array                      ║
+║                                                                  ║
+║  3. DELETE A SLIDE:                                              ║
+║     - Remove the function from the slides[] array                ║
+║     - Remove the matching entry from times[]                     ║
+║                                                                  ║
+║  4. REORDER SLIDES:                                              ║
+║     - Cut and paste slide functions in the slides[] array        ║
+║     - Move matching times[] entries too                          ║
+║                                                                  ║
+║  5. CHANGE COLORS:                                               ║
+║     - Edit the :root CSS variables at the top of <style>         ║
+║     - --acc is the accent color (amber)                          ║
+║     - --blu, --pur, --grn, --red etc for section colors          ║
+║                                                                  ║
+║  6. CHANGE FONTS:                                                ║
+║     - Edit font-family in the body rule                          ║
+║     - Change Google Fonts @import URL                            ║
+║                                                                  ║
+║  TIP: Use Ctrl+F to search for text you want to change!         ║
+╚══════════════════════════════════════════════════════════════════╝
+*/
+
+*{margin:0;padding:0;box-sizing:border-box}
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap');
+
+:root{
+  --bg:#ffffff;
+  --card:#f8fafc;
+  --card-border:#e2e8f0;
+  --txt:#1e293b;
+  --sub:#64748b;
+  --dim:#94a3b8;
+  --acc:#d97706;
+  --acc-bg:#fffbeb;
+  --red:#dc2626;
+  --red-bg:#fef2f2;
+  --blu:#2563eb;
+  --blu-bg:#eff6ff;
+  --pur:#7c3aed;
+  --pur-bg:#f5f3ff;
+  --grn:#059669;
+  --grn-bg:#ecfdf5;
+  --pnk:#db2777;
+  --pnk-bg:#fdf2f8;
+  --org:#ea580c;
+  --org-bg:#fff7ed;
+  --topbar-bg:#f8fafc;
+  --border:#e2e8f0;
+  --code-bg:#f1f5f9;
+  --shadow:0 1px 3px rgba(0,0,0,0.08);
+}
+
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--txt);font-family:'Inter',system-ui,sans-serif}
+.app{display:flex;flex-direction:column;height:100vh}
+
+.topbar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:10px 24px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--topbar-bg)}
+.topbar .dots{justify-self:center}
+.topbar .presenter-label{justify-self:end}
+.topbar .counter{font-size:13px;color:var(--sub)}
+.topbar .counter b{color:var(--acc)}
+.dots{display:flex;gap:3px}
+.dots span{width:6px;height:4px;border-radius:2px;background:#cbd5e1;cursor:pointer;transition:all .2s}
+.dots span.active{width:20px;background:var(--acc)}
+.dots span.done{background:#fbbf24}
+
+.slide-area{flex:1;overflow-y:auto;display:flex;justify-content:center;padding:28px;align-items:stretch}
+.slide-area>.slide{display:flex;flex-direction:column}
+.slide{width:100%;max-width:1200px;display:flex;flex-direction:column}
+
+.navbar{display:flex;justify-content:space-between;align-items:center;padding:10px 24px;border-top:1px solid var(--border);flex-shrink:0;background:var(--topbar-bg)}
+.btn{padding:8px 20px;border-radius:8px;border:none;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;font-family:inherit}
+.btn-prev{background:#f1f5f9;color:var(--txt);border:1px solid var(--border)}
+.btn-prev:hover{background:#e2e8f0}
+.btn-prev:disabled{opacity:.3;cursor:default}
+.btn-next{background:var(--acc);color:#fff}
+.btn-next:hover{background:#b45309;transform:scale(1.02)}
+.btn-next:disabled{background:#cbd5e1;color:#94a3b8;transform:none}
+.nav-hint{font-size:11px;color:var(--dim)}
+.presenter-label{display:flex;align-items:center;gap:8px;padding:5px 14px;border-radius:8px;border:1px solid var(--border);background:none;cursor:default}
+.presenter-label img{height:28px;width:auto;object-fit:contain}
+.presenter-label span{font-size:15px;font-weight:600;color:var(--txt)}
+
+h1{font-size:clamp(28px,5vw,48px);font-weight:800;line-height:1.15;color:var(--txt);padding-bottom:6px}
+h2{font-size:clamp(20px,3vw,28px);font-weight:700;margin-bottom:16px;color:var(--acc)}
+.subtitle{font-size:clamp(14px,2vw,20px);color:var(--sub);margin-top:8px}
+.badge{display:inline-block;padding:8px 20px;border-radius:10px;background:var(--acc-bg);color:var(--acc);font-size:13px;margin-top:20px;border:1px solid #fde68a}
+
+.card{background:var(--card);border-radius:10px;padding:16px;margin-bottom:10px;border:1px solid var(--card-border);box-shadow:var(--shadow)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.tag{display:inline-block;padding:2px 8px;border-radius:5px;font-size:11px;font-weight:600}
+
+.quote{border-left:3px solid var(--acc);padding:12px 16px;background:var(--acc-bg);border-radius:0 8px 8px 0;margin-bottom:12px}
+.quote p{font-style:italic;font-size:14px;line-height:1.5;color:var(--txt)}
+.quote .src{font-size:11px;color:var(--sub);margin-top:4px}
+
+.formula{text-align:center;padding:14px;border-radius:10px;background:linear-gradient(135deg,var(--pur-bg),var(--acc-bg));font-family:'JetBrains Mono',monospace;font-size:clamp(14px,2.5vw,20px);font-weight:700;color:var(--acc);margin-bottom:12px;border:1px solid #e9d5ff}
+.formula small{display:block;font-size:11px;color:var(--sub);font-weight:400;margin-top:2px}
+
+.analogy{padding:12px;border-radius:8px;background:var(--grn-bg);font-size:13px;line-height:1.8;border:1px solid #a7f3d0;color:var(--txt)}
+
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px;border-bottom:2px solid var(--border);color:var(--acc);font-weight:700;background:var(--card)}
+th:first-child{color:var(--sub);font-weight:400}
+td{padding:8px;border-bottom:1px solid #f1f5f9;color:var(--txt)}
+td:first-child{color:var(--sub)}
+
+.timeline{position:relative;padding-left:28px}
+.timeline::before{content:'';position:absolute;left:7px;top:0;bottom:0;width:2px;background:linear-gradient(180deg,var(--blu),var(--acc),var(--red))}
+.tl-item{position:relative;margin-bottom:10px}
+.tl-dot{position:absolute;left:-24px;top:4px;width:10px;height:10px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px #00000020}
+.tl-year{font-size:11px;font-weight:700;color:var(--acc);margin-right:6px}
+.tl-name{font-weight:700;font-size:14px;color:var(--txt)}
+.tl-desc{font-size:12px;color:var(--sub);margin-top:2px}
+
+.react-circles{display:flex;justify-content:center;gap:24px;margin-bottom:16px;flex-wrap:wrap}
+.react-circle{text-align:center;width:130px}
+.react-circle .circle{width:90px;height:90px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 6px;border:2px solid transparent;box-shadow:var(--shadow)}
+.react-circle .lbl{font-weight:700;font-size:14px}
+.react-circle .desc{font-size:10px;color:var(--sub)}
+.arrow-between{display:flex;align-items:center;font-size:24px;color:#94a3b8;margin-top:20px}
+
+pre.code{background:var(--code-bg);border-radius:8px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.6;color:var(--txt);overflow-x:auto;white-space:pre-wrap;border:1px solid var(--border)}
+
+.anatomy-grid .item{padding:14px;border-radius:10px;transition:all .2s}
+.anatomy-grid .item:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,0.08)}
+.anatomy-grid .icon{font-size:22px;margin-bottom:4px}
+.anatomy-grid .name{font-weight:700;font-size:14px}
+.anatomy-grid .desc{font-size:11px;color:var(--sub);margin-top:2px}
+.anatomy-grid .detail{font-size:11px;margin-top:8px;padding:8px;border-radius:6px;background:#f8fafc;color:var(--txt);border:1px solid var(--border)}
+
+.pattern-row{padding:10px 14px;border-radius:8px;margin-bottom:6px;border:1px solid var(--border);transition:all .15s}
+.pattern-row:hover{box-shadow:var(--shadow)}
+.pattern-row .flow{font-family:'JetBrains Mono',monospace;font-size:12px;padding:6px 10px;border-radius:6px;background:var(--code-bg);margin-top:6px;border:1px solid var(--border)}
+.pattern-row .when{font-size:11px;color:var(--sub);margin-top:4px}
+
+.bar-chart .bar-row{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.bar-chart .bar-label{font-size:12px;min-width:120px;color:var(--txt)}
+.bar-chart .bar-track{flex:1;height:22px;border-radius:8px;background:#f1f5f9;overflow:hidden}
+.bar-chart .bar-fill{height:100%;border-radius:8px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;transition:width 1s ease}
+.bar-chart .bar-val{font-size:10px;font-weight:700;color:#fff}
+
+.warn-box{padding:10px 14px;border-radius:8px;background:var(--red-bg);border:1px solid #fecaca;font-size:12px;color:var(--red)}
+.tip-box{padding:10px 14px;border-radius:8px;background:var(--acc-bg);border:1px solid #fde68a;font-size:12px;color:var(--acc)}
+.insight-box{padding:10px 14px;border-radius:8px;background:var(--acc-bg);border:1px solid #fde68a;font-size:12px;color:var(--acc);margin-top:10px}
+
+.note-list .note-item{font-size:13px;padding:6px 10px;border-left:3px solid var(--acc);margin-bottom:4px;background:var(--acc-bg);color:var(--txt)}
+
+.owasp-row{display:flex;gap:8px;align-items:center;padding:8px 12px;border-radius:6px;margin-bottom:4px;background:var(--red-bg);border:1px solid #fecaca}
+.owasp-code{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--red);font-weight:700;min-width:46px}
+.owasp-name{font-weight:600;font-size:13px;min-width:160px;color:var(--txt)}
+.owasp-desc{font-size:11px;color:var(--sub)}
+
+.mem-row{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid #f1f5f9}
+.mem-dot{width:8px;height:8px;border-radius:50%;margin-top:4px;flex-shrink:0}
+.mem-name{font-weight:700;font-size:13px}
+.mem-desc{font-size:11px;color:var(--sub)}
+.mem-impl{font-size:10px;color:var(--dim);text-align:right;min-width:100px;margin-left:auto}
+
+.problem-pattern{display:flex;align-items:center;gap:8px;padding:10px;border-radius:8px;margin-bottom:6px;border:1px solid var(--border)}
+.problem-box{padding:6px 12px;border-radius:6px;background:var(--red-bg);font-size:12px;color:var(--red);min-width:110px;text-align:center;border:1px solid #fecaca}
+.pattern-box{padding:6px 12px;border-radius:6px;font-size:13px;font-weight:700;min-width:80px;text-align:center}
+.pp-arrow{font-size:18px;color:var(--dim)}
+.pp-desc{font-size:11px;color:var(--sub);flex:1}
+
+.fw-row{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid #f1f5f9}
+.fw-tier{font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;min-width:60px;text-align:center;margin-top:2px}
+.fw-name{font-weight:700;font-size:14px}
+.fw-desc{font-size:11px;color:var(--sub)}
+
+.mcp-prims{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px}
+.mcp-prim{text-align:center;padding:12px;border-radius:8px;background:var(--acc-bg);border:1px solid #fde68a}
+.mcp-prim .icon{font-size:22px}
+.mcp-prim .name{font-weight:700;font-size:13px;color:var(--acc)}
+.mcp-prim .desc{font-size:10px;color:var(--sub)}
+.center{text-align:center}
+
+@media(max-width:700px){
+  .grid2,.grid3{grid-template-columns:1fr}
+  .slide-area{padding:12px}
+  .react-circles{gap:10px}
+  .react-circle{width:100px}
+  .react-circle .circle{width:70px;height:70px;font-size:22px}
+}
+.app.fullscreen{position:fixed;inset:0;z-index:9999;background:var(--bg)}
+@keyframes slideFadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.slide-animate{animation:slideFadeIn .25s ease both}
+.img-viewer{position:fixed;inset:0;background:rgba(15,23,42,.72);display:none;align-items:center;justify-content:center;z-index:10000;padding:24px}
+.img-viewer.active{display:flex}
+.img-viewer-panel{width:min(96vw,1200px);height:min(92vh,900px);background:#0b1220;border:1px solid rgba(255,255,255,.18);border-radius:12px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 45px rgba(0,0,0,.35)}
+.img-viewer-top{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.14);color:#dbeafe}
+.img-viewer-title{font-size:12px;color:#bfdbfe}
+.img-viewer-actions{display:flex;gap:8px}
+.img-viewer-btn{background:rgba(148,163,184,.15);color:#e2e8f0;border:1px solid rgba(148,163,184,.35);border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer}
+.img-viewer-btn:hover{background:rgba(148,163,184,.28)}
+.img-viewer-stage{flex:1;display:flex;align-items:center;justify-content:center;overflow:auto;padding:16px}
+.img-viewer-stage img{max-width:100%;max-height:100%;transform-origin:center center;transition:transform .15s ease;cursor:grab}
+.img-viewer-stage img:active{cursor:grabbing}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="topbar">
+    <div class="counter"><b id="slideNum">1</b> / <span id="slideTotal">21</span></div>
+    <div class="dots" id="dots"></div>
+    <div class="presenter-label"><img src="assets/logo.png" alt="DeepSense"><span>Pavankumar Sakare (DeepSense)</span></div>
+  </div>
+  <div class="slide-area"><div class="slide" id="slideContent"></div></div>
+  <div class="navbar">
+    <button class="btn btn-prev" id="prevBtn" onclick="prev()">← Previous</button>
+    <div class="nav-hint">Arrow keys · Space · Click buttons</div>
+    <button class="btn btn-next" id="nextBtn" onclick="next()">Next →</button>
+  </div>
+</div>
+
+<div class="img-viewer" id="imgViewer" onclick="viewerBackdropClick(event)">
+  <div class="img-viewer-panel">
+    <div class="img-viewer-top">
+      <div class="img-viewer-title">Image Viewer (Mouse wheel to zoom)</div>
+      <div class="img-viewer-actions">
+        <button class="img-viewer-btn" onclick="zoomOut(event)">-</button>
+        <button class="img-viewer-btn" onclick="resetZoom(event)">100%</button>
+        <button class="img-viewer-btn" onclick="zoomIn(event)">+</button>
+        <button class="img-viewer-btn" onclick="closeImageViewer(event)">Close</button>
+      </div>
+    </div>
+    <div class="img-viewer-stage" id="imgViewerStage">
+      <img id="imgViewerImage" alt="Zoomable preview">
+    </div>
+  </div>
+</div>
+
+<script>
+var idx=0;
+// ===== Google Embeddings slide helpers =====
+function embDot(x, y, z, color, size){
+  return '<div style="position:absolute;left:'+x+'%;top:'+y+'%;width:'+size+'px;height:'+size+'px;border-radius:50%;background:'+color+';transform:translateZ('+z+'px);box-shadow:0 0 0 2px rgba(255,255,255,.88),0 6px 14px rgba(0,0,0,.10)"></div>';
+}
+function embStage(inner, labels){
+  return ''
+  + '<div style="position:relative;height:255px;border-radius:16px;overflow:hidden;border:1px solid var(--border);background:radial-gradient(circle at 25% 20%, #ffffff 0%, #eff6ff 38%, #f8fafc 100%)">'
+  + '  <div style="position:absolute;inset:0;opacity:.28;background-image:linear-gradient(to right, rgba(148,163,184,.45) 1px, transparent 1px), linear-gradient(to bottom, rgba(148,163,184,.45) 1px, transparent 1px);background-size:28px 28px"></div>'
+  + '  <div style="position:absolute;inset:16px;transform-style:preserve-3d;transform:rotateX(62deg) rotateZ(-28deg)">'
+  +       inner
+  + '  </div>'
+  +      (labels || '')
+  + '</div>';
+}
+
+var embViews = {
+  semantic: `
+    <div style="display:grid;grid-template-columns:150px 150px 1fr;gap:10px;align-items:center;margin-bottom:12px">
+      <div style="padding:10px;border-radius:10px;background:var(--acc-bg);border:1px solid var(--border)">
+        <div style="font-size:11px;font-weight:800;color:var(--acc);margin-bottom:6px">Input tokens</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          <span class="tag" style="background:#fff;color:var(--txt);border:1px solid var(--border)">invoice</span>
+          <span class="tag" style="background:#fff;color:var(--txt);border:1px solid var(--border)">overdue</span>
+          <span class="tag" style="background:#fff;color:var(--txt);border:1px solid var(--border)">GST</span>
+          <span class="tag" style="background:#fff;color:var(--txt);border:1px solid var(--border)">reminder</span>
+        </div>
+      </div>
+      <div style="padding:10px;border-radius:10px;background:var(--pur-bg);border:1px solid var(--border);font-family:'JetBrains Mono',monospace">
+        <div style="font-size:11px;font-weight:800;color:var(--pur);margin-bottom:6px">Embedding vector</div>
+        <div style="font-size:10px;color:var(--txt);line-height:1.45">[0.17,<br>-0.42,<br>0.08,<br>... 3072D]</div>
+      </div>
+      <div>
+        ${
+          embStage(
+            [
+              // finance cluster
+              embDot(18,61,22,'#d97706',12), embDot(23,64,18,'#d97706',10), embDot(20,69,26,'#f59e0b',12),
+              embDot(27,66,16,'#f59e0b',10), embDot(25,59,14,'#d97706',11), embDot(16,66,28,'#fbbf24',9),
+
+              // code cluster
+              embDot(59,25,16,'#2563eb',11), embDot(65,29,24,'#3b82f6',12), embDot(70,32,18,'#60a5fa',10),
+              embDot(63,36,12,'#2563eb',9), embDot(72,26,22,'#3b82f6',11),
+
+              // support cluster
+              embDot(68,67,18,'#059669',12), embDot(74,72,28,'#10b981',10), embDot(78,67,14,'#34d399',11),
+              embDot(71,61,20,'#059669',9), embDot(80,74,24,'#10b981',10),
+
+              // query point
+              embDot(22,63,42,'#7c3aed',15)
+            ].join(''),
+            `
+            <div style="position:absolute;left:11%;top:72%;font-size:10px;font-weight:800;color:var(--acc);background:#ffffffd9;padding:3px 7px;border-radius:999px;border:1px solid var(--border)">Finance docs</div>
+            <div style="position:absolute;left:57%;top:16%;font-size:10px;font-weight:800;color:var(--blu);background:#ffffffd9;padding:3px 7px;border-radius:999px;border:1px solid var(--border)">Code snippets</div>
+            <div style="position:absolute;left:67%;top:76%;font-size:10px;font-weight:800;color:var(--grn);background:#ffffffd9;padding:3px 7px;border-radius:999px;border:1px solid var(--border)">Support tickets</div>
+            <div style="position:absolute;left:22%;top:53%;font-size:10px;font-weight:800;color:var(--pur);background:#ffffffd9;padding:3px 7px;border-radius:999px;border:1px solid var(--border)">Query</div>
+            `
+          )
+        }
+      </div>
+    </div>
+    <div class="insight-box">Nearby points mean “similar meaning”, not just shared keywords. The purple query lands near finance content, so an agent retrieves the right memory/documents first.</div>
+  `,
+
+  multimodal: `
+    <div style="display:grid;grid-template-columns:170px 1fr;gap:12px;align-items:start">
+      <div style="display:grid;gap:8px">
+        <div style="padding:10px;border-radius:10px;background:var(--card);border:1px solid var(--border)"><b>📝 Text</b><div style="font-size:11px;color:var(--sub);margin-top:4px">“Unpaid invoice from March”</div></div>
+        <div style="padding:10px;border-radius:10px;background:var(--card);border:1px solid var(--border)"><b>🖼️ Screenshot</b><div style="font-size:11px;color:var(--sub);margin-top:4px">invoice UI / bill image</div></div>
+        <div style="padding:10px;border-radius:10px;background:var(--card);border:1px solid var(--border)"><b>🎧 Audio</b><div style="font-size:11px;color:var(--sub);margin-top:4px">customer call summary</div></div>
+        <div style="padding:10px;border-radius:10px;background:var(--card);border:1px solid var(--border)"><b>📄 PDF</b><div style="font-size:11px;color:var(--sub);margin-top:4px">contract / policy doc</div></div>
+      </div>
+      <div>
+        ${
+          embStage(
+            [
+              embDot(26,49,18,'#7c3aed',11), embDot(31,46,16,'#d97706',12), embDot(35,52,22,'#2563eb',11),
+              embDot(29,56,20,'#059669',12), embDot(38,48,28,'#7c3aed',9), embDot(42,54,15,'#d97706',10),
+
+              embDot(69,24,16,'#94a3b8',8), embDot(76,28,20,'#94a3b8',9), embDot(73,70,18,'#94a3b8',8),
+              embDot(15,23,15,'#94a3b8',8), embDot(82,44,18,'#94a3b8',8)
+            ].join(''),
+            `
+            <div style="position:absolute;left:24%;top:44%;font-size:11px;font-weight:800;color:var(--pur);background:#ffffffdf;padding:4px 8px;border-radius:999px;border:1px solid var(--border)">Unified semantic concept</div>
+            <div style="position:absolute;left:7%;top:8%;font-size:10px;color:var(--sub)">Different modalities can land near each other</div>
+            `
+          )
+        }
+        <div class="tip-box" style="margin-top:10px">
+          Great for agents that work across screenshots, PDFs, audio, and text. One shared space makes multimodal retrieval much simpler.
+        </div>
+      </div>
+    </div>
+  `,
+
+  agent: `
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:8px;align-items:center;margin-bottom:12px">
+      <div class="card center" style="padding:12px;border-left:3px solid var(--blu)"><div style="font-size:11px;color:var(--sub)">1</div><div style="font-weight:800;color:var(--blu)">User query</div><div style="font-size:11px;color:var(--sub)">“Find similar tax notices”</div></div>
+      <div class="card center" style="padding:12px;border-left:3px solid var(--pur)"><div style="font-size:11px;color:var(--sub)">2</div><div style="font-weight:800;color:var(--pur)">Embed query</div><div style="font-size:11px;color:var(--sub)">vectorize meaning</div></div>
+      <div class="card center" style="padding:12px;border-left:3px solid var(--grn)"><div style="font-size:11px;color:var(--sub)">3</div><div style="font-weight:800;color:var(--grn)">Vector search</div><div style="font-size:11px;color:var(--sub)">nearest neighbors</div></div>
+      <div class="card center" style="padding:12px;border-left:3px solid var(--acc)"><div style="font-size:11px;color:var(--sub)">4</div><div style="font-weight:800;color:var(--acc)">Top-K memory</div><div style="font-size:11px;color:var(--sub)">relevant docs/tools</div></div>
+      <div class="card center" style="padding:12px;border-left:3px solid var(--red)"><div style="font-size:11px;color:var(--sub)">5</div><div style="font-weight:800;color:var(--red)">Agent acts</div><div style="font-size:11px;color:var(--sub)">answer / plan / tool call</div></div>
+    </div>
+
+    <div class="grid2">
+      <div class="card" style="border-left:3px solid var(--grn)">
+        <div style="font-weight:800;color:var(--grn);margin-bottom:6px">How it helps agents</div>
+        <div style="font-size:12px;line-height:1.7;color:var(--txt)">
+          • Better memory retrieval for RAG<br>
+          • Better clustering / routing of tasks<br>
+          • Better code / doc / ticket search<br>
+          • Faster than asking the LLM to reread everything every time
+        </div>
+      </div>
+      <div class="card" style="border-left:3px solid var(--red)">
+        <div style="font-weight:800;color:var(--red);margin-bottom:6px">What can go wrong</div>
+        <div style="font-size:12px;line-height:1.7;color:var(--txt)">
+          • Wrong task type hurts recall<br>
+          • Low-quality chunking hurts similarity search<br>
+          • Too-small vectors can lose signal<br>
+          • Embeddings help retrieval, not final reasoning by themselves
+        </div>
+      </div>
+    </div>
+  `
+};
+
+function setEmbView(mode, btn){
+  var box = document.getElementById('embViewBox');
+  if (box) box.innerHTML = embViews[mode] || '';
+
+  if (btn && btn.parentNode) {
+    Array.from(btn.parentNode.querySelectorAll('button')).forEach(function(b){
+      b.style.background = 'var(--card)';
+      b.style.color = 'var(--sub)';
+      b.style.border = '1px solid var(--border)';
+    });
+    btn.style.background = 'var(--acc)';
+    btn.style.color = '#fff';
+    btn.style.border = '1px solid var(--acc)';
+  }
+}
+
+// ===== Context Window slide helpers =====
+function ctxBar(label, width, value, bg, opts){
+  opts = opts || {};
+  var outside = !!opts.outside;
+  var insideColor = opts.insideColor || '#fff';
+  var outsideColor = opts.outsideColor || 'var(--txt)';
+  var minWidth = opts.minWidth || 44;
+
+  return `
+    <div class="bar-row">
+      <div class="bar-label">${label}</div>
+      <div class="bar-track" style="position:relative;overflow:visible">
+        <div class="bar-fill" style="width:${width}%;min-width:${outside ? 0 : minWidth}px;background:${bg};position:relative;justify-content:flex-end;">
+          ${outside ? '' : `<span class="bar-val" style="color:${insideColor}">${value}</span>`}
+        </div>
+        ${outside ? `<span style="
+            position:absolute;
+            left:calc(${width}% + 8px);
+            top:50%;
+            transform:translateY(-50%);
+            font-size:11px;
+            font-weight:800;
+            color:${outsideColor};
+            white-space:nowrap;
+          ">${value}</span>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+var ctxViews = {
+  timeline: `
+    <div style="font-size:11px;color:var(--sub);margin-bottom:8px">How frontier models stretched the context window</div>
+    <div class="bar-chart">
+      ${ctxBar('Claude (2023)', 5, '100K', 'var(--blu)', { outside:true })}
+      ${ctxBar('GPT-4 Turbo (2023)', 6.4, '128K', 'var(--pur)', { outside:true })}
+      ${ctxBar('Gemini 1.5 Pro (2024)', 50, '1M', 'var(--grn)')}
+      ${ctxBar('Gemini 1.5 Pro GA (2M)', 100, '2M', 'linear-gradient(90deg,var(--acc),var(--org))')}
+      ${ctxBar('GPT-4.1 (2025)', 52.4, '1.05M', 'var(--acc)')}
+      ${ctxBar('Claude 4.6 family (2026)', 50, '1M', 'var(--red)')}
+    </div>
+    <div class="insight-box">The big story: industry moved from ~100K-class windows to 1M–2M-class windows in about two years.</div>
+  `,
+
+  current: `
+    <div style="font-size:11px;color:var(--sub);margin-bottom:8px">Selected official context windows from current leading models</div>
+    <div class="bar-chart">
+      ${ctxBar('Gemini 1.5 Pro', 100, '2M', 'linear-gradient(90deg,var(--acc),var(--org))')}
+      ${ctxBar('GPT-4.1', 52.4, '1,047,576', 'var(--blu)')}
+      ${ctxBar('Gemini 3.1 Pro', 50, '1M', 'var(--grn)')}
+      ${ctxBar('Claude Sonnet 4.6', 50, '1M', 'var(--red)')}
+      ${ctxBar('GPT-4o', 6.4, '128K', 'var(--pur)', { outside:true })}
+    </div>
+    <div style="margin-top:8px;font-size:10px;color:var(--sub)">
+      Note: Claude 4.6 1M is currently described with beta/API caveats in Anthropic docs. “Context window” is separate from max output tokens.
+    </div>
+  `,
+
+  engineering: `
+    <div class="grid3" style="gap:8px">
+      <div style="padding:10px;border-radius:10px;background:var(--blu-bg);border:1px solid var(--border)">
+        <div style="font-weight:800;color:var(--blu);font-size:12px;margin-bottom:5px">What fills the window?</div>
+        <div style="font-size:11px;line-height:1.6;color:var(--txt)">
+          System prompt<br>
+          Tool schemas<br>
+          Chat history<br>
+          Retrieved docs<br>
+          Tool outputs<br>
+          Current user input
+        </div>
+      </div>
+      <div style="padding:10px;border-radius:10px;background:var(--grn-bg);border:1px solid var(--border)">
+        <div style="font-weight:800;color:var(--grn);font-size:12px;margin-bottom:5px">Why it helps</div>
+        <div style="font-size:11px;line-height:1.6;color:var(--txt)">
+          Whole-repo analysis<br>
+          Long contracts / PDFs<br>
+          Multi-document synthesis<br>
+          Fewer chunk boundaries
+        </div>
+      </div>
+      <div style="padding:10px;border-radius:10px;background:var(--red-bg);border:1px solid var(--border)">
+        <div style="font-weight:800;color:var(--red);font-size:12px;margin-bottom:5px">Why it can still fail</div>
+        <div style="font-size:11px;line-height:1.6;color:var(--txt)">
+          Irrelevant tokens add noise<br>
+          Instructions get buried<br>
+          Cost and latency rise<br>
+          Tool output can bloat context
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:12px">
+      <div style="font-size:11px;color:var(--sub);margin-bottom:6px">Example token budget inside one long-context request</div>
+      <div style="display:flex;height:22px;border-radius:999px;overflow:hidden;border:1px solid var(--border);font-size:10px;font-weight:700;color:#fff">
+        <div style="width:12%;background:var(--blu);display:flex;align-items:center;justify-content:center">System</div>
+        <div style="width:14%;background:var(--pur);display:flex;align-items:center;justify-content:center">Tools</div>
+        <div style="width:34%;background:var(--grn);display:flex;align-items:center;justify-content:center">Docs</div>
+        <div style="width:20%;background:var(--acc);display:flex;align-items:center;justify-content:center">History</div>
+        <div style="width:20%;background:var(--red);display:flex;align-items:center;justify-content:center">Output</div>
+      </div>
+    </div>
+
+    <div class="tip-box" style="margin-top:10px">
+      Best practice: retrieve → rank → compress → restate instructions. Bigger windows reward better context engineering.
+    </div>
+  `
+};
+
+function setCtxView(mode, btn){
+  var box = document.getElementById("ctxViewBox");
+  if (box) box.innerHTML = ctxViews[mode] || "";
+
+  if (btn && btn.parentNode) {
+    Array.from(btn.parentNode.querySelectorAll("button")).forEach(function(b){
+      b.style.background = "var(--card)";
+      b.style.color = "var(--sub)";
+      b.style.border = "1px solid var(--border)";
+    });
+    btn.style.background = "var(--acc)";
+    btn.style.color = "#fff";
+    btn.style.border = "1px solid var(--acc)";
+  }
+}
+
+var slides=[
+
+// ========== S0: TITLE ==========
+function(){return '<div style="position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;text-align:center"><h1 style="background:linear-gradient(135deg,#d97706,#dc2626,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent">AI Agents</h1><div class="subtitle">The Complete Technical Deep Dive</div><div class="badge">(2 Sample Projects) · 2024-2026 Research</div><div style="position:absolute;bottom:16px;left:0;right:0;font-size:13px;color:var(--dim);text-align:center">Last Updated on 05/Apr/2026</div></div>';},
+
+// ========== S1: AGENDA ==========
+function(){var items=[["🧠","What Is an Agent?","5 min"],["📚","Core Theories & Cognitive Roots","6 min"],["🔬","Anatomy of a Modern Agent","7 min"],["🏗️","Architecture Patterns","7 min"],["⚙️","Key Technical Concepts","5 min"],["🛠️","Frameworks & Ecosystem","7 min"],["🌳","Planning & Reasoning","5 min"],["💾","Memory & Tools","5 min"],["📊","Real-World & Benchmarks","5 min"],["🛡️","Safety & Future","5 min"],["🎯","Real World Projects & Q/A","3 min"]];
+var h='<h2>Core Topics</h2><div class="grid2">';
+items.forEach(function(it){h+='<div class="card" style="display:flex;align-items:center;gap:10px;padding:10px 14px"><span style="font-size:18px">'+it[0]+'</span><span style="flex:1;font-size:13px;color:var(--txt)">'+it[1]+'</span></div>';});
+return h+'</div>';},
+
+// ========== S2: DEFINITION ==========
+function(){return '<h2>What Exactly Is an AI Agent?</h2><div class="quote"><p>"A system where an LLM dynamically directs its own processes and tool usage, maintaining control over how it accomplishes tasks."</p><div class="src">— Anthropic, December 2024</div></div><div class="formula">Agent = LLM + Memory + Planning + Tool Use<small>— Lilian Weng, OpenAI</small></div><div class="grid3" style="margin-bottom:12px"><div class="card center" style="border-color:'+hsl("blu")+'"><div style="font-weight:700;color:var(--blu)">Open Ended</div><div style="font-size:11px;color:var(--sub)">No predefined endpoint</div></div><div class="card center" style="border-color:'+hsl("pur")+'"><div style="font-weight:700;color:var(--pur)">Feedback Loops</div><div style="font-size:11px;color:var(--sub)">Learns from environment</div></div><div class="card center" style="border-color:'+hsl("grn")+'"><div style="font-weight:700;color:var(--grn)">No Fixed Path</div><div style="font-size:11px;color:var(--sub)">Dynamic execution flow</div></div></div><div class="analogy">🧠 <b>Model</b> = Brain in a jar<br>💬 <b>Assistant</b> = Desk worker waiting for questions<br>🏃 <b>Agent</b> = Employee given a mission</div><div style="margin-top:10px;font-size:11px;color:#9ca3af;font-style:italic;text-align:right">Citation: <a href="https://www.anthropic.com/engineering/building-effective-agents" target="_blank" rel="noopener noreferrer" style="color:#9ca3af;font-style:italic">Anthropic — Building effective agents (Published Dec 19, 2024)</a></div>';},
+
+// ========== S3: SPECTRUM ==========
+function(){var items=[["Pipeline","Code","Fixed sequence A→B→C. Fully deterministic. No LLM decisions.","ETL jobs, data preprocessing","blu"],["Workflow","Code + LLM","Predefined paths with LLM calls at decision points. Code controls flow.","Prompt chaining, routing, parallelization","pur"],["Agent","LLM","Model dynamically directs its own process. No fixed path.","Claude Code, research agents, coding agents","acc"]];
+var h='<h2>Agent vs. Workflow vs. Pipeline</h2><div style="display:flex;align-items:center;padding:8px 14px;border-radius:20px;background:linear-gradient(90deg,var(--blu-bg),var(--pur-bg),var(--acc-bg));margin-bottom:16px;font-size:12px;border:1px solid var(--border)"><span style="flex:1;text-align:center;color:var(--blu)">Deterministic</span><span style="flex:1;text-align:center;color:var(--sub)">← Who controls the flow? →</span><span style="flex:1;text-align:center;color:var(--acc)">Autonomous</span></div>';
+items.forEach(function(it){var c=it[4];h+='<div class="card" style="border-color:var(--'+c+');border-left:3px solid var(--'+c+')"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-weight:700;font-size:16px;color:var(--'+c+')">'+it[0]+'</span><span class="tag" style="background:var(--'+c+'-bg);color:var(--'+c+');border:1px solid var(--border)">Control: '+it[1]+'</span></div><div style="font-size:13px;margin:4px 0;color:var(--txt)">'+it[2]+'</div><div style="font-size:11px;color:var(--sub)">Example: '+it[3]+'</div></div>';});
+return h+'<div class="warn-box">⚠️ Start with the simplest solution possible. 95% per-step accuracy → ~60% over 10 steps.</div>';},
+
+// ========== S4: COMPARISON TABLE ==========
+function(){return '<h2>Model → Assistant → Agent</h2><div style="overflow-x:auto"><table><thead><tr><th>Dimension</th><th>AI Model</th><th>AI Assistant</th><th>AI Agent</th></tr></thead><tbody><tr><td>Control Flow</td><td>Single inference</td><td>User-driven Q&A</td><td>Agent-driven goal loop</td></tr><tr><td>Autonomy</td><td>None — pure function</td><td>Low — reactive</td><td>High — proactive</td></tr><tr><td>Memory</td><td>Context window only</td><td>Session memory</td><td>Persistent multi-layer</td></tr><tr><td>Tool Use</td><td>None natively</td><td>Limited, predefined</td><td>Dynamic selection</td></tr><tr><td>State</td><td>Stateless</td><td>Session state</td><td>Persistent + checkpoints</td></tr></tbody></table></div>';},
+
+// ========== S5: TIMELINE ==========
+function(){var items=[["1983","SOAR","Working memory + long-term memories + universal subgoaling. Direct ancestor of modern agent memory.","blu"],["1987","BDI Model","Bratman's Beliefs-Desires-Intentions. Deliberation: sense → desire → intend → plan → act.","blu"],["1993","ACT-R","Anderson. Modular cognition with activation-based memory retrieval.","pur"],["2022","CoT","Wei et al. Chain-of-Thought prompting. Step-by-step reasoning before answering.","grn"],["2023","ReAct ★","Yao et al. THE foundational pattern: Thought → Action → Observation loop. All modern agents use this.","acc"],["2023","ToT / GoT","Tree of Thoughts (branching) + Graph of Thoughts (arbitrary graphs). Game of 24: 4% → 74%.","red"],["2023","Reflexion","Shinn et al. Verbal self-reflection stored in episodic memory. 91% on HumanEval.","org"]];
+var h='<h2>Intellectual Lineage</h2><div class="timeline">';
+items.forEach(function(it){h+='<div class="tl-item"><div class="tl-dot" style="background:var(--'+it[3]+')"></div><div><span class="tl-year">'+it[0]+'</span><span class="tl-name" style="color:var(--'+it[3]+')">'+it[1]+'</span><div class="tl-desc">'+it[2]+'</div></div></div>';});
+return h+'</div>';},
+
+// ========== S6: REACT LOOP ==========
+function(){return '<h2>The ReAct Loop — Foundation of Every Agent</h2><div class="react-circles"><div class="react-circle"><div class="circle" style="background:var(--pur-bg);border-color:var(--pur)">💭</div><div class="lbl" style="color:var(--pur)">Thought</div><div class="desc">LLM reasons about current state</div></div><div class="arrow-between">→</div><div class="react-circle"><div class="circle" style="background:var(--acc-bg);border-color:var(--acc)">⚡</div><div class="lbl" style="color:var(--acc)">Action</div><div class="desc">Selects & calls tool with JSON params</div></div><div class="arrow-between">→</div><div class="react-circle"><div class="circle" style="background:var(--grn-bg);border-color:var(--grn)">👁️</div><div class="lbl" style="color:var(--grn)">Observation</div><div class="desc">Tool returns result; state updates</div></div></div><pre class="code">Thought: I need to find the Eiffel Tower\'s construction date.\nAction:  search("Eiffel Tower construction date")\nObservation: Built 1887-1889, completed March 1889.\nThought: The answer is 1889. Task complete.</pre>';},
+
+// ========== S7: ANATOMY ==========
+function(){var items=[["👁️","Perception","Text, Audio, APIs, Sensors, Screenshots","How agents observe. Multimodal inputs → structured data.","blu"],["💾","Memory","Short-term · Long-term · Entity · Contextual · User","5-layer stack. Context window = RAM. Vector DBs = disk.","pur"],["🧠","Reasoning","CoT, ReAct, Extended Thinking","LLM as policy core. Maps context → decisions. 'Advisor, not decision-maker.'","pnk"],["📋","Planning","Task decomposition, Subgoals, Goal hierarchies","Plan-and-Execute: planner creates steps, executor handles each. 92% completion.","acc"],["⚡","Action","Tool calls, Code execution, API calls","Agent REQUESTS actions via structured JSON. Harness executes. Degrades >8 tools.","grn"],["🔄","Learning","Self-critique, Reflection, Re-planning","Evaluator-Optimizer pattern. Reflexion achieved 91% on HumanEval.","red"]];
+var h='<h2>Anatomy of a Modern AI Agent</h2><div class="grid3 anatomy-grid">';
+items.forEach(function(it){h+='<div class="item card" style="border-left:3px solid var(--'+it[4]+')"><div class="icon">'+it[0]+'</div><div class="name" style="color:var(--'+it[4]+')">'+it[1]+'</div><div class="desc">'+it[2]+'</div><div class="detail">'+it[3]+'</div></div>';});
+return h+'</div>';},
+
+// ========== S8: PATTERNS ==========
+function(){
+  function node(label, bg, color, extra){
+    return '<div style="padding:8px 10px;border-radius:10px;background:'+bg+';color:'+color+';font-size:11px;font-weight:700;border:1px solid var(--border);min-width:58px;text-align:center;box-shadow:var(--shadow);'+(extra||'')+'">'+label+'</div>';
+  }
+  function arrow(label){
+    return '<div style="display:flex;align-items:center;justify-content:center;gap:4px;color:var(--dim);font-size:12px;font-weight:700;min-width:28px">'+
+             '<span style="font-size:18px;line-height:1">→</span>'+(label?'<span style="font-size:9px;color:var(--sub)">'+label+'</span>':'')+
+           '</div>';
+  }
+
+  var h = '<h2>Anthropic\\\'s 5+1 Agentic Patterns</h2>';
+
+  h += '<div class="grid2" style="gap:12px">';
+
+  // 1 Prompt chaining
+  h += '<div class="card" style="border-left:4px solid var(--blu)">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px;flex-wrap:wrap">'+
+          '<div style="font-weight:800;color:var(--blu);font-size:15px">1. Prompt Chaining</div>'+
+          '<span class="tag" style="background:var(--blu-bg);color:var(--blu);border:1px solid var(--border)">Sequential</span>'+
+        '</div>'+
+        '<div style="font-size:11px;color:var(--sub);margin-bottom:10px">Break one task into fixed smaller steps with checks in between.</div>'+
+        '<div style="display:flex;align-items:center;justify-content:flex-start;gap:6px;flex-wrap:wrap;margin-bottom:10px">'+
+          node('IN','var(--acc-bg)','var(--acc)')+
+          arrow()+
+          node('LLM 1','var(--card)','var(--txt)')+
+          arrow()+
+          node('Gate','var(--blu-bg)','var(--blu)')+
+          arrow()+
+          node('LLM 2','var(--card)','var(--txt)')+
+          arrow()+
+          node('LLM 3','var(--card)','var(--txt)')+
+          arrow()+
+          node('OUT','var(--acc-bg)','var(--acc)')+
+        '</div>'+
+        '<div style="font-size:11px;color:var(--sub)"><b>Use when:</b> the task can be decomposed into predictable subtasks.</div>'+
+      '</div>';
+
+  // 2 Routing
+  h += '<div class="card" style="border-left:4px solid var(--pur)">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px;flex-wrap:wrap">'+
+          '<div style="font-weight:800;color:var(--pur);font-size:15px">2. Routing</div>'+
+          '<span class="tag" style="background:var(--pur-bg);color:var(--pur);border:1px solid var(--border)">Classifier</span>'+
+        '</div>'+
+        '<div style="font-size:11px;color:var(--sub);margin-bottom:10px">Classify the input, then send it to the right specialized path.</div>'+
+        '<div style="display:grid;grid-template-columns:auto auto 1fr auto;align-items:center;gap:8px;margin-bottom:10px">'+
+          node('IN','var(--acc-bg)','var(--acc)')+
+          '<div style="font-size:18px;color:var(--dim)">→</div>'+
+          '<div style="display:flex;align-items:center;gap:8px">'+
+            node('Router','var(--pur-bg)','var(--pur)')+
+            '<div style="display:flex;flex-direction:column;gap:6px;margin-left:4px">'+
+              '<div style="display:flex;align-items:center;gap:6px"><span style="color:var(--dim)">↗</span>'+node('LLM A','var(--card)','var(--txt)','min-width:54px')+'</div>'+
+              '<div style="display:flex;align-items:center;gap:6px"><span style="color:var(--dim)">→</span>'+node('LLM B','var(--card)','var(--txt)','min-width:54px')+'</div>'+
+              '<div style="display:flex;align-items:center;gap:6px"><span style="color:var(--dim)">↘</span>'+node('LLM C','var(--card)','var(--txt)','min-width:54px')+'</div>'+
+            '</div>'+
+          '</div>'+
+          '<div style="display:flex;align-items:center;gap:8px"><span style="font-size:18px;color:var(--dim)">→</span>'+node('OUT','var(--acc-bg)','var(--acc)')+'</div>'+
+        '</div>'+
+        '<div style="font-size:11px;color:var(--sub)"><b>Use when:</b> different categories need different prompts, tools, or models.</div>'+
+      '</div>';
+
+  // 3 Parallelization
+  h += '<div class="card" style="border-left:4px solid var(--grn)">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px;flex-wrap:wrap">'+
+          '<div style="font-weight:800;color:var(--grn);font-size:15px">3. Parallelization</div>'+
+          '<span class="tag" style="background:var(--grn-bg);color:var(--grn);border:1px solid var(--border)">Fan-out / aggregate</span>'+
+        '</div>'+
+        '<div style="font-size:11px;color:var(--sub);margin-bottom:10px">Run independent subtasks at the same time, then combine the results.</div>'+
+        '<div style="display:grid;grid-template-columns:auto auto 1fr auto auto;align-items:center;gap:8px;margin-bottom:10px">'+
+          node('IN','var(--acc-bg)','var(--acc)')+
+          '<div style="font-size:18px;color:var(--dim)">→</div>'+
+          '<div style="display:flex;align-items:center;gap:8px">'+
+            node('Coord.','var(--blu-bg)','var(--blu)')+
+            '<div style="display:flex;flex-direction:column;gap:6px;margin-left:4px">'+
+              '<div style="display:flex;align-items:center;gap:6px"><span style="color:var(--dim)">↗</span>'+node('LLM 1','var(--card)','var(--txt)','min-width:54px')+'</div>'+
+              '<div style="display:flex;align-items:center;gap:6px"><span style="color:var(--dim)">→</span>'+node('LLM 2','var(--card)','var(--txt)','min-width:54px')+'</div>'+
+              '<div style="display:flex;align-items:center;gap:6px"><span style="color:var(--dim)">↘</span>'+node('LLM 3','var(--card)','var(--txt)','min-width:54px')+'</div>'+
+            '</div>'+
+          '</div>'+
+          node('Agg.','var(--blu-bg)','var(--blu)')+
+          '<div style="display:flex;align-items:center;gap:8px"><span style="font-size:18px;color:var(--dim)">→</span>'+node('OUT','var(--acc-bg)','var(--acc)')+'</div>'+
+        '</div>'+
+        '<div style="font-size:11px;color:var(--sub)"><b>Use when:</b> subtasks are independent or you want multiple views/votes.</div>'+
+      '</div>';
+
+  // 4 Orchestrator-workers
+  h += '<div class="card" style="border-left:4px solid var(--acc)">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px;flex-wrap:wrap">'+
+          '<div style="font-weight:800;color:var(--acc);font-size:15px">4. Orchestrator → Workers</div>'+
+          '<span class="tag" style="background:var(--acc-bg);color:var(--acc);border:1px solid var(--border)">Dynamic breakdown</span>'+
+        '</div>'+
+        '<div style="font-size:11px;color:var(--sub);margin-bottom:10px">A central model decides what subtasks are needed, then delegates dynamically.</div>'+
+        '<div style="display:grid;grid-template-columns:auto auto 1fr auto auto;align-items:center;gap:8px;margin-bottom:10px">'+
+          node('IN','var(--acc-bg)','var(--acc)')+
+          '<div style="font-size:18px;color:var(--dim)">→</div>'+
+          '<div style="display:flex;align-items:center;gap:8px">'+
+            node('Orchestrator','var(--acc-bg)','var(--acc)')+
+            '<div style="display:flex;flex-direction:column;gap:6px;margin-left:4px">'+
+              '<div style="display:flex;align-items:center;gap:6px"><span style="color:var(--dim)">↗</span>'+node('Worker 1','var(--card)','var(--txt)','min-width:68px')+'</div>'+
+              '<div style="display:flex;align-items:center;gap:6px"><span style="color:var(--dim)">→</span>'+node('Worker 2','var(--card)','var(--txt)','min-width:68px')+'</div>'+
+              '<div style="display:flex;align-items:center;gap:6px"><span style="color:var(--dim)">↘</span>'+node('Worker 3','var(--card)','var(--txt)','min-width:68px')+'</div>'+
+            '</div>'+
+          '</div>'+
+          node('Synth.','var(--acc-bg)','var(--acc)')+
+          '<div style="display:flex;align-items:center;gap:8px"><span style="font-size:18px;color:var(--dim)">→</span>'+node('OUT','var(--acc-bg)','var(--acc)')+'</div>'+
+        '</div>'+
+        '<div style="font-size:11px;color:var(--sub)"><b>Use when:</b> you cannot know the needed subtasks in advance.</div>'+
+      '</div>';
+
+  // 5 Evaluator-optimizer
+  h += '<div class="card" style="border-left:4px solid var(--red)">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px;flex-wrap:wrap">'+
+          '<div style="font-weight:800;color:var(--red);font-size:15px">5. Evaluator → Optimizer</div>'+
+          '<span class="tag" style="background:var(--red-bg);color:var(--red);border:1px solid var(--border)">Feedback loop</span>'+
+        '</div>'+
+        '<div style="font-size:11px;color:var(--sub);margin-bottom:10px">One model generates, another critiques, and the output improves in a loop.</div>'+
+        '<div style="display:flex;align-items:center;justify-content:flex-start;gap:6px;flex-wrap:wrap;margin-bottom:10px">'+
+          node('IN','var(--acc-bg)','var(--acc)')+
+          arrow()+
+          node('Generator','var(--card)','var(--txt)')+
+          '<div style="display:flex;flex-direction:column;align-items:center;gap:2px">'+
+            '<span style="font-size:18px;color:var(--dim)">⇄</span>'+
+            '<span style="font-size:9px;color:var(--sub)">feedback</span>'+
+          '</div>'+
+          node('Evaluator','var(--red-bg)','var(--red)')+
+          arrow('accepted')+
+          node('OUT','var(--acc-bg)','var(--acc)')+
+        '</div>'+
+        '<div style="font-size:11px;color:var(--sub)"><b>Use when:</b> evaluation criteria are clear and refinement adds value.</div>'+
+      '</div>';
+
+  // 6 Autonomous agent
+  h += '<div class="card" style="border-left:4px solid var(--org)">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px;flex-wrap:wrap">'+
+          '<div style="font-weight:800;color:var(--org);font-size:15px">+1. Autonomous Agent</div>'+
+          '<span class="tag" style="background:var(--org-bg);color:var(--org);border:1px solid var(--border)">Open-ended loop</span>'+
+        '</div>'+
+        '<div style="font-size:11px;color:var(--sub);margin-bottom:10px">The model plans, uses tools, observes results, and loops until done.</div>'+
+        '<div style="display:flex;align-items:center;justify-content:flex-start;gap:8px;flex-wrap:wrap;margin-bottom:10px">'+
+          node('Goal','var(--acc-bg)','var(--acc)')+
+          '<span style="font-size:18px;color:var(--dim)">→</span>'+
+          node('Think','var(--org-bg)','var(--org)')+
+          '<span style="font-size:18px;color:var(--dim)">→</span>'+
+          node('Act','var(--org-bg)','var(--org)')+
+          '<span style="font-size:18px;color:var(--dim)">→</span>'+
+          node('Observe','var(--org-bg)','var(--org)')+
+          '<span style="font-size:18px;color:var(--dim)">↺</span>'+
+          node('Done','var(--grn-bg)','var(--grn)')+
+        '</div>'+
+        '<div style="font-size:11px;color:var(--sub)"><b>Use when:</b> the number of steps is unknown and the path cannot be hardcoded.</div>'+
+      '</div>';
+
+  h += '</div>';
+
+  h += '<div class="insight-box" style="margin-top:12px">Anthropic’s recommendation: start with the simplest pattern that works. Workflows are more predictable; autonomous agents are best for open-ended tasks but add cost and error risk.</div>';
+
+  return h;
+},
+
+// ========== S9: MULTI-AGENT ==========
+function(){
+  function chip(text, bg, color){
+    return '<span style="display:inline-block;padding:4px 8px;border-radius:999px;background:'+bg+';color:'+color+';border:1px solid var(--border);font-size:10px;font-weight:700">'+text+'</span>';
+  }
+  function node(label, bg, color, w){
+    return '<div style="min-width:'+(w||68)+'px;padding:7px 10px;border-radius:10px;background:'+bg+';color:'+color+';border:1px solid var(--border);font-size:10px;font-weight:700;text-align:center;box-shadow:var(--shadow)">'+label+'</div>';
+  }
+  function arrow(sym){
+    return '<div style="font-size:16px;color:var(--dim);font-weight:700;line-height:1">'+(sym||'→')+'</div>';
+  }
+
+  var h = '<h2>Multi-Agent Architecture Patterns</h2>';
+
+  h += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">'
+     + chip('Central control', 'var(--blu-bg)', 'var(--blu)')
+     + chip('Distributed handoff', 'var(--pur-bg)', 'var(--pur)')
+     + chip('Tiered governance', 'var(--acc-bg)', 'var(--acc)')
+     + chip('Human checkpoints', 'var(--grn-bg)', 'var(--grn)')
+     + '</div>';
+
+  h += '<div class="grid2" style="gap:12px">';
+
+  // 1. Orchestrator-Worker
+  h += '<div class="card" style="padding:14px;border-left:4px solid var(--blu)">';
+  h +=   '<div style="display:flex;justify-content:space-between;align-items:start;gap:8px;margin-bottom:8px">';
+  h +=     '<div><div style="font-size:19px;margin-bottom:2px">🎛️</div><div style="font-weight:800;font-size:15px;color:var(--txt)">Orchestrator-Worker</div></div>';
+  h +=     chip('Best for unpredictable tasks', 'var(--blu-bg)', 'var(--blu)');
+  h +=   '</div>';
+  h +=   '<div style="font-size:11px;color:var(--sub);margin-bottom:10px">One central agent decomposes work, delegates to specialists, then synthesizes.</div>';
+  h +=   '<div style="padding:12px;border-radius:12px;background:linear-gradient(135deg,var(--blu-bg),#ffffff);border:1px solid var(--border);margin-bottom:10px">';
+  h +=     '<div style="display:grid;grid-template-columns:auto auto 1fr auto auto;gap:8px;align-items:center">';
+  h +=       node('Task', 'var(--acc-bg)', 'var(--acc)', 56) + arrow();
+  h +=       node('Orchestrator', 'var(--blu-bg)', 'var(--blu)', 92);
+  h +=       '<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-start">'
+          +   '<div style="display:flex;align-items:center;gap:6px">'+arrow('↗')+node('Worker A','var(--card)','var(--txt)',70)+'</div>'
+          +   '<div style="display:flex;align-items:center;gap:6px">'+arrow('→')+node('Worker B','var(--card)','var(--txt)',70)+'</div>'
+          +   '<div style="display:flex;align-items:center;gap:6px">'+arrow('↘')+node('Worker C','var(--card)','var(--txt)',70)+'</div>'
+          + '</div>';
+  h +=       node('Synth', 'var(--blu-bg)', 'var(--blu)', 64);
+  h +=       '<div style="display:flex;align-items:center;gap:8px">'+arrow()+node('Output', 'var(--acc-bg)', 'var(--acc)', 62)+'</div>';
+  h +=     '</div>';
+  h +=   '</div>';
+  h +=   '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
+  h +=     '<div style="padding:8px;border-radius:10px;background:var(--grn-bg);font-size:11px;color:var(--grn);border:1px solid var(--border)"><b>Strength:</b> flexible and easy to steer</div>';
+  h +=     '<div style="padding:8px;border-radius:10px;background:var(--red-bg);font-size:11px;color:var(--red);border:1px solid var(--border)"><b>Risk:</b> bottleneck at the orchestrator</div>';
+  h +=   '</div>';
+  h += '</div>';
+
+  // 2. Peer-to-Peer
+  h += '<div class="card" style="padding:14px;border-left:4px solid var(--pur)">';
+  h +=   '<div style="display:flex;justify-content:space-between;align-items:start;gap:8px;margin-bottom:8px">';
+  h +=     '<div><div style="font-size:19px;margin-bottom:2px">🤝</div><div style="font-weight:800;font-size:15px;color:var(--txt)">Peer-to-Peer (Swarm)</div></div>';
+  h +=     chip('Best for lightweight handoffs', 'var(--pur-bg)', 'var(--pur)');
+  h +=   '</div>';
+  h +=   '<div style="font-size:11px;color:var(--sub);margin-bottom:10px">Agents pass control directly to one another instead of reporting to a central controller.</div>';
+  h +=   '<div style="padding:12px;border-radius:12px;background:linear-gradient(135deg,var(--pur-bg),#ffffff);border:1px solid var(--border);margin-bottom:10px">';
+  h +=     '<div style="display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">';
+  h +=       node('Agent A', 'var(--pur-bg)', 'var(--pur)', 74) + arrow('⇄') +
+             node('Agent B', 'var(--card)', 'var(--txt)', 74) + arrow('⇄') +
+             node('Agent C', 'var(--card)', 'var(--txt)', 74);
+  h +=     '</div>';
+  h +=     '<div style="display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;font-size:10px;color:var(--sub)">';
+  h +=       '<span>specialist handoff</span><span>•</span><span>no single bottleneck</span><span>•</span><span>local decisions</span>';
+  h +=     '</div>';
+  h +=   '</div>';
+  h +=   '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
+  h +=     '<div style="padding:8px;border-radius:10px;background:var(--grn-bg);font-size:11px;color:var(--grn);border:1px solid var(--border)"><b>Strength:</b> fast, decentralized coordination</div>';
+  h +=     '<div style="padding:8px;border-radius:10px;background:var(--red-bg);font-size:11px;color:var(--red);border:1px solid var(--border)"><b>Risk:</b> harder to debug and govern</div>';
+  h +=   '</div>';
+  h += '</div>';
+
+  // 3. Hierarchical
+  h += '<div class="card" style="padding:14px;border-left:4px solid var(--acc)">';
+  h +=   '<div style="display:flex;justify-content:space-between;align-items:start;gap:8px;margin-bottom:8px">';
+  h +=     '<div><div style="font-size:19px;margin-bottom:2px">🏢</div><div style="font-weight:800;font-size:15px;color:var(--txt)">Hierarchical</div></div>';
+  h +=     chip('Best for larger organizations', 'var(--acc-bg)', 'var(--acc)');
+  h +=   '</div>';
+  h +=   '<div style="font-size:11px;color:var(--sub);margin-bottom:10px">A top supervisor manages coordinators, and coordinators manage lower-level workers.</div>';
+  h +=   '<div style="padding:12px;border-radius:12px;background:linear-gradient(135deg,var(--acc-bg),#ffffff);border:1px solid var(--border);margin-bottom:10px">';
+  h +=     '<div style="display:flex;flex-direction:column;align-items:center;gap:8px">';
+  h +=       node('Supervisor', 'var(--acc-bg)', 'var(--acc)', 88);
+  h +=       '<div style="display:flex;align-items:center;gap:18px">'+arrow('↙')+arrow('↓')+arrow('↘')+'</div>';
+  h +=       '<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">'
+          +     node('Coord A', 'var(--card)', 'var(--txt)', 76)
+          +     node('Coord B', 'var(--card)', 'var(--txt)', 76)
+          +     node('Coord C', 'var(--card)', 'var(--txt)', 76)
+          +   '</div>';
+  h +=       '<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:2px">'
+          +     node('W1', 'var(--card)', 'var(--txt)', 42)
+          +     node('W2', 'var(--card)', 'var(--txt)', 42)
+          +     node('W3', 'var(--card)', 'var(--txt)', 42)
+          +     node('W4', 'var(--card)', 'var(--txt)', 42)
+          +     node('W5', 'var(--card)', 'var(--txt)', 42)
+          +     node('W6', 'var(--card)', 'var(--txt)', 42)
+          +   '</div>';
+  h +=     '</div>';
+  h +=   '</div>';
+  h +=   '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
+  h +=     '<div style="padding:8px;border-radius:10px;background:var(--grn-bg);font-size:11px;color:var(--grn);border:1px solid var(--border)"><b>Strength:</b> scalable and controlled</div>';
+  h +=     '<div style="padding:8px;border-radius:10px;background:var(--red-bg);font-size:11px;color:var(--red);border:1px solid var(--border)"><b>Risk:</b> more setup and coordination overhead</div>';
+  h +=   '</div>';
+  h += '</div>';
+
+  // 4. Human-in-the-Loop
+  h += '<div class="card" style="padding:14px;border-left:4px solid var(--grn)">';
+  h +=   '<div style="display:flex;justify-content:space-between;align-items:start;gap:8px;margin-bottom:8px">';
+  h +=     '<div><div style="font-size:19px;margin-bottom:2px">🧑‍💻</div><div style="font-weight:800;font-size:15px;color:var(--txt)">Human-in-the-Loop</div></div>';
+  h +=     chip('Best for high-risk actions', 'var(--grn-bg)', 'var(--grn)');
+  h +=   '</div>';
+  h +=   '<div style="font-size:11px;color:var(--sub);margin-bottom:10px">The system pauses at checkpoints so a human can approve, edit, or reject before continuing.</div>';
+  h +=   '<div style="padding:12px;border-radius:12px;background:linear-gradient(135deg,var(--grn-bg),#ffffff);border:1px solid var(--border);margin-bottom:10px">';
+  h +=     '<div style="display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap">';
+  h +=       node('Agent', 'var(--card)', 'var(--txt)', 62) + arrow() +
+             node('Draft / Plan', 'var(--card)', 'var(--txt)', 86) + arrow() +
+             node('Human Check', 'var(--grn-bg)', 'var(--grn)', 94) + arrow() +
+             node('Continue', 'var(--acc-bg)', 'var(--acc)', 72);
+  h +=     '</div>';
+  h +=     '<div style="display:flex;justify-content:center;gap:16px;margin-top:8px;font-size:10px">';
+  h +=       '<span style="color:var(--grn)">✓ approve / edit</span><span style="color:var(--red)">✕ reject / escalate</span>';
+  h +=     '</div>';
+  h +=   '</div>';
+  h +=   '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
+  h +=     '<div style="padding:8px;border-radius:10px;background:var(--grn-bg);font-size:11px;color:var(--grn);border:1px solid var(--border)"><b>Strength:</b> trust, auditability, safer execution</div>';
+  h +=     '<div style="padding:8px;border-radius:10px;background:var(--red-bg);font-size:11px;color:var(--red);border:1px solid var(--border)"><b>Risk:</b> extra latency and less automation</div>';
+  h +=   '</div>';
+  h += '</div>';
+
+  h += '</div>';
+
+  h += '<div class="card" style="margin-top:12px;padding:12px 14px;background:linear-gradient(135deg,var(--card),var(--acc-bg));border-left:4px solid var(--acc)">';
+  h +=   '<div style="font-weight:800;font-size:13px;color:var(--txt);margin-bottom:6px">Quick selection guide</div>';
+  h +=   '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;font-size:11px;color:var(--txt)">';
+  h +=     '<div><b style="color:var(--blu)">Orchestrator</b><br>unpredictable tasks</div>';
+  h +=     '<div><b style="color:var(--pur)">Swarm</b><br>specialist handoffs</div>';
+  h +=     '<div><b style="color:var(--acc)">Hierarchy</b><br>large multi-team systems</div>';
+  h +=     '<div><b style="color:var(--grn)">HITL</b><br>high-risk approvals</div>';
+  h +=   '</div>';
+  h += '</div>';
+
+  return h;
+},
+
+// ========== S10: CONTEXT WINDOW ==========
+function(){return `
+  <h2>Context Window of an LLM</h2>
+
+  <div class="grid2" style="align-items:start">
+    <div>
+      <div class="card" style="border-left:4px solid var(--blu)">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+          <div style="font-weight:800;color:var(--blu)">What is a context window?</div>
+          <span class="tag" style="background:var(--blu-bg);color:var(--blu);border:1px solid var(--border)">Working memory for one request</span>
+        </div>
+        <div style="font-size:13px;line-height:1.75;color:var(--txt)">
+          The <b>context window</b> is the total amount of information an LLM can consider in a single request.
+          It includes the <b>system prompt</b>, <b>user input</b>, <b>chat history</b>, <b>retrieved documents</b>,
+          <b>tool results</b>, and the model’s own generated output budget.
+        </div>
+        <div class="tip-box" style="margin-top:10px">
+          Mental model: context window = the model’s current whiteboard, not permanent memory.
+        </div>
+      </div>
+
+      <div class="card" style="border-left:4px solid var(--grn)">
+        <div style="font-weight:800;color:var(--grn);margin-bottom:8px">Why it matters</div>
+        <div class="note-list">
+          <div class="note-item">Lets one prompt hold larger documents, codebases, transcripts, PDFs, and multimodal inputs.</div>
+          <div class="note-item">Improves cross-file and cross-document reasoning because more evidence fits at once.</div>
+          <div class="note-item">Reduces aggressive chunking, but still does <b>not</b> replace retrieval, ranking, and summarization.</div>
+        </div>
+      </div>
+
+      <div class="card" style="border-left:4px solid var(--red)">
+        <div style="font-weight:800;color:var(--red);margin-bottom:8px">Does more context mean better performance?</div>
+        <div class="grid2" style="gap:8px">
+          <div style="padding:10px;border-radius:8px;background:var(--grn-bg);border:1px solid #a7f3d0">
+            <div style="font-weight:700;color:var(--grn);font-size:12px">Good</div>
+            <div style="font-size:11px;color:var(--txt);margin-top:4px">
+              Whole repos, long contracts, fewer handoffs, stronger global reasoning
+            </div>
+          </div>
+          <div style="padding:10px;border-radius:8px;background:var(--red-bg);border:1px solid #fecaca">
+            <div style="font-weight:700;color:var(--red);font-size:12px">Trade-offs</div>
+            <div style="font-size:11px;color:var(--txt);margin-top:4px">
+              Higher latency, higher cost, more noise, and buried instructions
+            </div>
+          </div>
+        </div>
+        <div class="warn-box" style="margin-top:10px">
+          <b>Best rule:</b> use enough context, not maximum context. Curated context usually beats dumping everything in.
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+          <div style="font-weight:800;color:var(--acc)">Interactive View</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button onclick="setCtxView('timeline', this)" style="padding:6px 10px;border-radius:999px;background:var(--acc);color:#fff;border:1px solid var(--acc);font-size:11px;font-weight:700;cursor:pointer">Trend</button>
+            <button onclick="setCtxView('current', this)" style="padding:6px 10px;border-radius:999px;background:var(--card);color:var(--sub);border:1px solid var(--border);font-size:11px;font-weight:700;cursor:pointer">Current Models</button>
+            <button onclick="setCtxView('engineering', this)" style="padding:6px 10px;border-radius:999px;background:var(--card);color:var(--sub);border:1px solid var(--border);font-size:11px;font-weight:700;cursor:pointer">Engineering Notes</button>
+          </div>
+        </div>
+
+        <div id="ctxViewBox">${ctxViews.timeline}</div>
+      </div>
+
+      <div class="card" style="background:linear-gradient(135deg,var(--blu-bg),var(--pur-bg))">
+        <div style="font-weight:800;font-size:13px;color:var(--txt);margin-bottom:6px">What you should remember</div>
+        <div style="font-size:12px;line-height:1.75;color:var(--txt)">
+          Bigger context windows unlock new use cases, but <b>quality of context</b> still matters more than raw size.
+          Long-context systems win when they keep only the most relevant tokens in the prompt.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:8px;font-size:10px;color:var(--sub);text-align:right">
+    Research base: official OpenAI, Anthropic, and Google Gemini model / long-context docs
+  </div>
+`;},
+
+// ========== S11: MEMORY ==========
+// ========== MEMORY ARCHITECTURE ==========
+function(){
+  var items = [
+    {
+      no:'01', icon:'⚡', name:'Short-Term Memory', color:'blu', bg:'var(--blu-bg)',
+      purpose:'Current working context for the active task',
+      desc:'Recent messages, tool results, and temporary reasoning state used during the current run.',
+      store:'Context window · session buffer',
+      write:'Write every turn',
+      read:'Read first'
+    },
+    {
+      no:'02', icon:'🗂️', name:'Long-Term Memory', color:'pur', bg:'var(--pur-bg)',
+      purpose:'Persistent memory across sessions',
+      desc:'Stores reusable knowledge, past outcomes, and summarized experience that should survive beyond one chat.',
+      store:'Vector DB · memory store',
+      write:'Summaries / learned facts',
+      read:'Retrieve when relevant'
+    },
+    {
+      no:'03', icon:'🕸️', name:'Entity Memory', color:'grn', bg:'var(--grn-bg)',
+      purpose:'Structured facts about people, places, objects, systems',
+      desc:'Tracks entities and relationships so the agent can remember who did what, where, and how things connect.',
+      store:'Knowledge graph · structured DB',
+      write:'Entity updates',
+      read:'Lookup by entity'
+    },
+    {
+      no:'04', icon:'🧩', name:'Contextual Memory', color:'acc', bg:'var(--acc-bg)',
+      purpose:'Fusion layer that assembles the right context',
+      desc:'Combines session state, retrieved docs, tools, and memory signals into one coherent prompt for the model.',
+      store:'Memory manager · orchestration layer',
+      write:'Context assembly metadata',
+      read:'Always in orchestration'
+    },
+    {
+      no:'05', icon:'👤', name:'User Memory', color:'red', bg:'var(--red-bg)',
+      purpose:'Personalization and preferences',
+      desc:'Stores user-specific preferences, style choices, recurring settings, and approved defaults for future runs.',
+      store:'User profile store · preference DB',
+      write:'Stable preferences only',
+      read:'Inject when useful'
+    }
+  ];
+
+  function renderCard(it){
+    return `
+      <div class="card" style="padding:12px 14px;border-left:5px solid var(--${it.color});margin-bottom:10px;background:linear-gradient(135deg,${it.bg},#ffffff)">
+        <div style="display:grid;grid-template-columns:52px 1fr 210px;gap:12px;align-items:start">
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px">
+            <div style="width:40px;height:40px;border-radius:12px;background:${it.bg};display:flex;align-items:center;justify-content:center;font-size:19px;border:1px solid var(--border)">${it.icon}</div>
+            <div style="font-size:10px;font-weight:800;color:var(--${it.color})">${it.no}</div>
+          </div>
+
+          <div>
+            <div style="font-weight:800;font-size:15px;color:var(--${it.color});margin-bottom:2px">${it.name}</div>
+            <div style="font-size:11px;font-weight:700;color:var(--txt);margin-bottom:4px">${it.purpose}</div>
+            <div style="font-size:11px;line-height:1.52;color:var(--sub)">${it.desc}</div>
+          </div>
+
+          <div style="padding:10px;border-radius:10px;background:#ffffff;border:1px solid var(--border)">
+            <div style="font-size:10px;font-weight:800;color:var(--dim);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">Implementation view</div>
+            <div style="font-size:11px;color:var(--txt);margin-bottom:6px"><b>Store:</b> ${it.store}</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+              <div style="padding:6px 8px;border-radius:8px;background:${it.bg};font-size:10px;color:var(--${it.color});border:1px solid var(--border)"><b>Write:</b> ${it.write}</div>
+              <div style="padding:6px 8px;border-radius:8px;background:#f8fafc;font-size:10px;color:var(--txt);border:1px solid var(--border)"><b>Read:</b> ${it.read}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  return `
+    <div style="width:calc(100% + 34px);margin-left:-17px">
+      <h2>Memory Architecture in AI Agents — 5 Layers</h2>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <span class="tag" style="background:var(--blu-bg);color:var(--blu);border:1px solid var(--border)">Working memory</span>
+        <span class="tag" style="background:var(--pur-bg);color:var(--pur);border:1px solid var(--border)">Persistent memory</span>
+        <span class="tag" style="background:var(--grn-bg);color:var(--grn);border:1px solid var(--border)">Structured memory</span>
+        <span class="tag" style="background:var(--acc-bg);color:var(--acc);border:1px solid var(--border)">Context fusion</span>
+        <span class="tag" style="background:var(--red-bg);color:var(--red);border:1px solid var(--border)">Personalization</span>
+      </div>
+
+      <div>
+        <div class="card" style="padding:14px;margin-bottom:12px;background:linear-gradient(135deg,var(--card),#ffffff)">
+          <div style="font-weight:800;font-size:14px;color:var(--txt);margin-bottom:10px">Simple way to understand the 5 layers</div>
+
+          <div style="display:grid;gap:12px">
+
+            <!-- 1-2 -->
+            <div style="padding:12px;border-radius:14px;background:linear-gradient(135deg,var(--blu-bg),var(--pur-bg));border:1px solid var(--border)">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+                <div style="font-size:13px;font-weight:800;color:var(--txt)">1–2. Core memory foundation</div>
+                <span class="tag" style="background:#ffffff;color:var(--txt);border:1px solid var(--border)">live + persistent</span>
+              </div>
+
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                <div style="padding:10px;border-radius:12px;background:#ffffff;border:1px solid var(--border)">
+                  <div style="font-size:12px;font-weight:800;color:var(--blu)">⚡ 01 Short-Term Memory</div>
+                  <div style="font-size:11px;color:var(--txt);margin-top:5px">Keeps the <b>current working state</b> for the active run.</div>
+                  <div style="font-size:10px;color:var(--sub);margin-top:6px">Context window · session buffer</div>
+                </div>
+
+                <div style="padding:10px;border-radius:12px;background:#ffffff;border:1px solid var(--border)">
+                  <div style="font-size:12px;font-weight:800;color:var(--pur)">🗂️ 02 Long-Term Memory</div>
+                  <div style="font-size:11px;color:var(--txt);margin-top:5px">Keeps <b>persistent recall</b> across sessions and tasks.</div>
+                  <div style="font-size:10px;color:var(--sub);margin-top:6px">Vector DB · memory store</div>
+                </div>
+              </div>
+
+              <div style="margin-top:8px;font-size:11px;color:var(--sub)">
+                Think of this as: <b style="color:var(--blu)">working memory</b> + <b style="color:var(--pur)">saved memory</b>.
+              </div>
+            </div>
+
+            <!-- 3-4 -->
+            <div style="padding:12px;border-radius:14px;background:linear-gradient(135deg,var(--grn-bg),var(--acc-bg));border:1px solid var(--border)">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+                <div style="font-size:13px;font-weight:800;color:var(--txt)">3–4. Knowledge + context assembly</div>
+                <span class="tag" style="background:#ffffff;color:var(--txt);border:1px solid var(--border)">structure + fusion</span>
+              </div>
+
+              <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center">
+                <div style="padding:10px;border-radius:12px;background:#ffffff;border:1px solid var(--border)">
+                  <div style="font-size:12px;font-weight:800;color:var(--grn)">🕸️ 03 Entity Memory</div>
+                  <div style="font-size:11px;color:var(--txt);margin-top:5px">Stores <b>facts, entities, and relationships</b>.</div>
+                  <div style="font-size:10px;color:var(--sub);margin-top:6px">Knowledge graph · structured DB</div>
+                </div>
+
+                <div style="font-size:22px;color:var(--acc);font-weight:800">→</div>
+
+                <div style="padding:10px;border-radius:12px;background:#ffffff;border:1px solid var(--border)">
+                  <div style="font-size:12px;font-weight:800;color:var(--acc)">🧩 04 Contextual Memory</div>
+                  <div style="font-size:11px;color:var(--txt);margin-top:5px">Selects and <b>assembles the right context</b> for the model.</div>
+                  <div style="font-size:10px;color:var(--sub);margin-top:6px">Memory manager · orchestration layer</div>
+                </div>
+              </div>
+
+              <div style="margin-top:8px;font-size:11px;color:var(--sub)">
+                First the system knows <b>what exists</b>, then it decides <b>what to inject now</b>.
+              </div>
+            </div>
+
+            <!-- 5 -->
+            <div style="padding:12px;border-radius:14px;background:var(--red-bg);border:1px solid var(--border)">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+                <div style="font-size:13px;font-weight:800;color:var(--txt)">5. Personalization layer</div>
+                <span class="tag" style="background:#ffffff;color:var(--txt);border:1px solid var(--border)">user-specific</span>
+              </div>
+
+              <div style="padding:10px;border-radius:12px;background:#ffffff;border:1px solid var(--border)">
+                <div style="font-size:12px;font-weight:800;color:var(--red)">👤 05 User Memory</div>
+                <div style="font-size:11px;color:var(--txt);margin-top:5px">Stores <b>preferences, defaults, tone, and personalization</b> for future runs.</div>
+                <div style="font-size:10px;color:var(--sub);margin-top:6px">User profile store · preference DB</div>
+              </div>
+
+              <div style="margin-top:8px;font-size:11px;color:var(--sub)">
+                This layer does not define the task itself — it shapes <b>how the system behaves for this user</b>.
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="card" style="padding:12px 14px;margin-bottom:12px">
+          <div style="font-weight:800;font-size:13px;color:var(--txt);margin-bottom:8px">Quick mental model</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+            <div style="padding:10px;border-radius:10px;background:var(--blu-bg);border:1px solid var(--border)">
+              <div style="font-size:12px;font-weight:800;color:var(--blu)">1–2</div>
+              <div style="font-size:11px;color:var(--txt);margin-top:4px">What the agent remembers now vs later</div>
+            </div>
+            <div style="padding:10px;border-radius:10px;background:var(--acc-bg);border:1px solid var(--border)">
+              <div style="font-size:12px;font-weight:800;color:var(--acc)">3–4</div>
+              <div style="font-size:11px;color:var(--txt);margin-top:4px">What the agent knows and what it chooses to use</div>
+            </div>
+            <div style="padding:10px;border-radius:10px;background:var(--red-bg);border:1px solid var(--border)">
+              <div style="font-size:12px;font-weight:800;color:var(--red)">5</div>
+              <div style="font-size:11px;color:var(--txt);margin-top:4px">How the agent adapts to the user</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tip-box" style="font-size:12px">
+          <b>Presenter line:</b> 1–2 are about memory duration, 3–4 are about knowledge and selection, and 5 is about personalization.
+        </div>
+      </div>
+    </div>
+  `;
+},
+
+// ========== S12: TECH CONCEPTS ==========
+// ========== KEY TECHNICAL CONCEPTS ==========
+function(){return `
+  <h2>Key Technical Concepts</h2>
+
+  <div class="grid2" style="gap:14px;align-items:stretch">
+
+    <!-- 1. Function Calling -->
+    <div class="card" style="padding:16px;border-left:4px solid var(--blu);background:linear-gradient(135deg,var(--blu-bg),#ffffff)">
+      <div style="display:flex;justify-content:space-between;align-items:start;gap:10px;margin-bottom:8px">
+        <div>
+          <div style="font-size:13px;font-weight:800;color:var(--blu)">1. Function Calling</div>
+          <div style="font-size:11px;color:var(--sub);margin-top:3px">LLM decides the tool, app executes it</div>
+        </div>
+        <span class="tag" style="background:#ffffff;color:var(--blu);border:1px solid var(--border)">Tool use</span>
+      </div>
+
+      <div style="font-size:12px;line-height:1.65;color:var(--txt);margin-bottom:10px">
+        The model does <b>not run code directly</b>. It returns structured arguments for a tool, and your application safely executes that tool.
+      </div>
+
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        <div style="padding:8px 10px;border-radius:10px;background:#ffffff;border:1px solid var(--border);font-size:11px;font-weight:700;color:var(--txt)">User asks</div>
+        <div style="font-size:18px;color:var(--dim)">→</div>
+        <div style="padding:8px 10px;border-radius:10px;background:#ffffff;border:1px solid var(--border);font-size:11px;font-weight:700;color:var(--blu)">LLM selects tool</div>
+        <div style="font-size:18px;color:var(--dim)">→</div>
+        <div style="padding:8px 10px;border-radius:10px;background:#ffffff;border:1px solid var(--border);font-size:11px;font-weight:700;color:var(--grn)">App executes</div>
+        <div style="font-size:18px;color:var(--dim)">→</div>
+        <div style="padding:8px 10px;border-radius:10px;background:#ffffff;border:1px solid var(--border);font-size:11px;font-weight:700;color:var(--acc)">Result back</div>
+      </div>
+
+      <pre class="code" style="margin:0;font-size:11px">{
+  "tool": "get_weather",
+  "arguments": { "location": "Halifax" }
+}</pre>
+
+      <div class="tip-box" style="margin-top:10px;font-size:11px">
+        Example: agent chooses <b>search_email</b>, <b>query_database</b>, or <b>get_weather</b> based on intent.
+      </div>
+    </div>
+
+    <!-- 2. Context Window Budget -->
+    <div class="card" style="padding:16px;border-left:4px solid var(--acc);background:linear-gradient(135deg,var(--acc-bg),#ffffff)">
+      <div style="display:flex;justify-content:space-between;align-items:start;gap:10px;margin-bottom:8px">
+        <div>
+          <div style="font-size:13px;font-weight:800;color:var(--acc)">2. Context Window Budget</div>
+          <div style="font-size:11px;color:var(--sub);margin-top:3px">Not all tokens should be treated equally</div>
+        </div>
+        <span class="tag" style="background:#ffffff;color:var(--acc);border:1px solid var(--border)">Prompt design</span>
+      </div>
+
+      <div style="font-size:12px;line-height:1.65;color:var(--txt);margin-bottom:10px">
+        The context window is limited space. Good agents decide <b>what deserves to be inside</b> rather than dumping everything into the prompt.
+      </div>
+
+      <div style="margin-bottom:10px">
+        <div style="font-size:11px;color:var(--sub);margin-bottom:6px">Example token allocation</div>
+        <div style="display:flex;height:24px;border-radius:999px;overflow:hidden;border:1px solid var(--border);font-size:10px;font-weight:700;color:#fff">
+          <div style="width:12%;background:var(--blu);display:flex;align-items:center;justify-content:center">System</div>
+          <div style="width:16%;background:var(--pur);display:flex;align-items:center;justify-content:center">Tools</div>
+          <div style="width:32%;background:var(--grn);display:flex;align-items:center;justify-content:center">RAG</div>
+          <div style="width:22%;background:var(--acc);display:flex;align-items:center;justify-content:center">History</div>
+          <div style="width:18%;background:var(--red);display:flex;align-items:center;justify-content:center">Buffer</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div style="padding:10px;border-radius:10px;background:#ffffff;border:1px solid var(--border)">
+          <div style="font-size:11px;font-weight:800;color:var(--grn)">Good</div>
+          <div style="font-size:11px;color:var(--txt);margin-top:4px">Only include relevant docs, recent tool results, and critical instructions.</div>
+        </div>
+        <div style="padding:10px;border-radius:10px;background:#ffffff;border:1px solid var(--border)">
+          <div style="font-size:11px;font-weight:800;color:var(--red)">Bad</div>
+          <div style="font-size:11px;color:var(--txt);margin-top:4px">Dumping full chat history, entire PDFs, and repeated instructions every turn.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Structured Output -->
+    <div class="card" style="padding:16px;border-left:4px solid var(--pur);background:linear-gradient(135deg,var(--pur-bg),#ffffff)">
+      <div style="display:flex;justify-content:space-between;align-items:start;gap:10px;margin-bottom:8px">
+        <div>
+          <div style="font-size:13px;font-weight:800;color:var(--pur)">3. Structured Output</div>
+          <div style="font-size:11px;color:var(--sub);margin-top:3px">Make answers machine-readable</div>
+        </div>
+        <span class="tag" style="background:#ffffff;color:var(--pur);border:1px solid var(--border)">JSON / schema</span>
+      </div>
+
+      <div style="font-size:12px;line-height:1.65;color:var(--txt);margin-bottom:10px">
+        Agents often need outputs that downstream code can parse reliably. That means returning <b>schema-shaped data</b>, not only prose.
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <div style="padding:10px;border-radius:10px;background:#ffffff;border:1px solid var(--border)">
+          <div style="font-size:11px;font-weight:800;color:var(--grn);margin-bottom:5px">Preferred flow</div>
+          <div style="font-size:11px;color:var(--txt)">Reason internally → validate fields → emit final JSON</div>
+        </div>
+        <div style="padding:10px;border-radius:10px;background:#ffffff;border:1px solid var(--border)">
+          <div style="font-size:11px;font-weight:800;color:var(--red);margin-bottom:5px">Common mistake</div>
+          <div style="font-size:11px;color:var(--txt)">Forcing rigid formatting too early and hurting reasoning quality</div>
+        </div>
+      </div>
+
+      <pre class="code" style="margin:0;font-size:11px">{
+  "priority": "high",
+  "action": "follow_up",
+  "reason": "invoice overdue > 30 days"
+}</pre>
+
+      <div class="insight-box" style="margin-top:10px;font-size:11px">
+        Example: use structured output for task status, routing decisions, extracted fields, and workflow handoffs.
+      </div>
+    </div>
+
+    <!-- 4. Caching -->
+    <div class="card" style="padding:16px;border-left:4px solid var(--grn);background:linear-gradient(135deg,var(--grn-bg),#ffffff)">
+      <div style="display:flex;justify-content:space-between;align-items:start;gap:10px;margin-bottom:8px">
+        <div>
+          <div style="font-size:13px;font-weight:800;color:var(--grn)">4. Caching</div>
+          <div style="font-size:11px;color:var(--sub);margin-top:3px">Reduce repeated cost and latency</div>
+        </div>
+        <span class="tag" style="background:#ffffff;color:var(--grn);border:1px solid var(--border)">Performance</span>
+      </div>
+
+      <div style="font-size:12px;line-height:1.65;color:var(--txt);margin-bottom:10px">
+        If the same instructions, context, or retrieved content appear repeatedly, caching can save time and money.
+      </div>
+
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        <div style="padding:8px 10px;border-radius:10px;background:#ffffff;border:1px solid var(--border);font-size:11px;font-weight:700;color:var(--txt)">System prompt</div>
+        <div style="font-size:18px;color:var(--dim)">+</div>
+        <div style="padding:8px 10px;border-radius:10px;background:#ffffff;border:1px solid var(--border);font-size:11px;font-weight:700;color:var(--txt)">Tool schemas</div>
+        <div style="font-size:18px;color:var(--dim)">+</div>
+        <div style="padding:8px 10px;border-radius:10px;background:#ffffff;border:1px solid var(--border);font-size:11px;font-weight:700;color:var(--txt)">Shared docs</div>
+        <div style="font-size:18px;color:var(--dim)">→</div>
+        <div style="padding:8px 10px;border-radius:10px;background:#ffffff;border:1px solid var(--border);font-size:11px;font-weight:700;color:var(--grn)">Cacheable prefix</div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div style="padding:10px;border-radius:10px;background:#ffffff;border:1px solid var(--border)">
+          <div style="font-size:11px;font-weight:800;color:var(--grn)">Good candidates</div>
+          <div style="font-size:11px;color:var(--txt);margin-top:4px">system prompt, policies, tool descriptions, repeated reference context</div>
+        </div>
+        <div style="padding:10px;border-radius:10px;background:#ffffff;border:1px solid var(--border)">
+          <div style="font-size:11px;font-weight:800;color:var(--red)">Usually not worth caching</div>
+          <div style="font-size:11px;color:var(--txt);margin-top:4px">rapidly changing tool outputs, one-off user messages, volatile data</div>
+        </div>
+      </div>
+
+      <div class="tip-box" style="margin-top:10px;font-size:11px">
+        Example: same policy docs or tool schemas across many agent calls = ideal caching opportunity.
+      </div>
+    </div>
+
+  </div>
+
+  <div class="card" style="margin-top:14px;padding:12px 14px;background:linear-gradient(135deg,var(--card),var(--acc-bg));border-left:4px solid var(--acc)">
+    <div style="font-weight:800;font-size:13px;color:var(--txt);margin-bottom:6px">Presenter takeaway</div>
+    <div style="font-size:12px;color:var(--txt);line-height:1.7">
+      <b>Function calling</b> lets agents act, <b>context budgeting</b> keeps prompts efficient, <b>structured output</b> makes workflows reliable, and <b>caching</b> makes systems cheaper and faster.
+    </div>
+  </div>
+`;},
+
+// ========== S13: FRAMEWORKS ==========
+function(){var items=[["DIY","No Framework","Direct LLM API + own tool orchestration. Maximum control.","dim","var(--card)"],["Protocol","MCP","Protocol, NOT a framework. 'USB-C for AI.' 97M+ downloads. JSON-RPC 2.0.","acc","var(--acc-bg)"],["Framework","LangGraph","Graph-based state machines. Cyclic graphs, checkpoints, HITL. LinkedIn, Uber, Klarna.","blu","var(--blu-bg)"],["Framework","CrewAI/n8n","Role-based: Crews (autonomous) + Flows (deterministic). 100K+ devs.","red","var(--red-bg)"],["Framework","OpenAI Agents SDK","Agents, Handoffs, Guardrails, Sessions. Successor to Swarm. 100+ LLMs.","grn","var(--grn-bg)"],["Framework","MS Agent Framework","AutoGen + Semantic Kernel merged (Oct 2025). .NET + Python. Azure.","pur","var(--pur-bg)"]];
+var h='<h2>The Framework Landscape (2026)</h2>';
+items.forEach(function(it){h+='<div class="fw-row"><div class="fw-tier" style="background:'+it[4]+';color:var(--'+it[3]+');border:1px solid var(--border)">'+it[0]+'</div><div><div class="fw-name" style="color:var(--'+it[3]+')">'+it[1]+'</div><div class="fw-desc">'+it[2]+'</div></div></div>';});
+return h;},
+
+// ========== S14: MCP ==========
+function(){return `
+  <h2>MCP: Model Context Protocol</h2>
+
+  <div class="mcp-prims" style="margin-bottom:14px">
+    <div class="mcp-prim" style="background:var(--acc-bg);border:1px solid #fde68a">
+      <div class="icon">🔧</div>
+      <div class="name">Tools</div>
+      <div class="desc">Functions the model can call</div>
+    </div>
+    <div class="mcp-prim" style="background:var(--acc-bg);border:1px solid #fde68a">
+      <div class="icon">📄</div>
+      <div class="name">Resources</div>
+      <div class="desc">Data the model can read</div>
+    </div>
+    <div class="mcp-prim" style="background:var(--acc-bg);border:1px solid #fde68a">
+      <div class="icon">💬</div>
+      <div class="name">Prompts</div>
+      <div class="desc">Templates for common operations</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:12px;padding:14px">
+    <div style="font-size:13px;line-height:1.8;color:var(--txt)">
+      ⚠️ Protocol for API — like API for API design<br>
+      ⚠️ NOT an agent framework — it is a standardized integration layer<br>
+      ⚠️ NOT an orchestration engine or agent brain<br>
+      ✅ Solves the N×M integration problem by standardizing how models connect to external systems
+    </div>
+  </div>
+
+  <div class="grid2" style="gap:12px;align-items:start;margin-bottom:12px">
+
+    <div class="card" style="padding:14px;border-left:4px solid var(--acc);background:linear-gradient(135deg,var(--card),#ffffff)">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px">
+        <div style="font-weight:800;font-size:14px;color:var(--txt)">Example project layout</div>
+        <span class="tag" style="background:var(--acc-bg);color:var(--acc);border:1px solid var(--border)">developer view</span>
+      </div>
+
+      <div style="font-size:12px;color:var(--sub);margin-bottom:8px">
+        One practical way to organize agent guidance and MCP documentation in a repo.
+      </div>
+
+      <pre class="code" style="margin:0;font-size:12px;line-height:1.6">root/
+├─ .claude/
+│  ├─ tools.md
+│  ├─ prompts/
+│  │  └─ research.md
+│  └─ mcp/
+│     └─ notion.md
+├─ src/
+├─ docs/
+└─ README.md</pre>
+
+      <div class="tip-box" style="margin-top:10px;font-size:11px">
+        Keep tool guidance, prompt docs, and MCP server notes close to the repo so agent behavior is easier to understand and maintain.
+      </div>
+    </div>
+
+    <div class="card" style="padding:14px;border-left:4px solid var(--pur);background:linear-gradient(135deg,var(--card),#ffffff)">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px">
+        <div style="font-weight:800;font-size:14px;color:var(--txt)">Example: Notion MCP definition</div>
+        <span class="tag" style="background:var(--pur-bg);color:var(--pur);border:1px solid var(--border)">sample file</span>
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        <div style="padding:8px 10px;border-radius:10px;background:#ffffff;border:1px solid var(--border);font-size:11px;font-weight:700;color:var(--txt)">Model</div>
+        <div style="font-size:18px;color:var(--dim)">→</div>
+        <div style="padding:8px 10px;border-radius:10px;background:#ffffff;border:1px solid var(--border);font-size:11px;font-weight:700;color:var(--pur)">MCP client</div>
+        <div style="font-size:18px;color:var(--dim)">→</div>
+        <div style="padding:8px 10px;border-radius:10px;background:#ffffff;border:1px solid var(--border);font-size:11px;font-weight:700;color:var(--grn)">Notion MCP server</div>
+        <div style="font-size:18px;color:var(--dim)">→</div>
+        <div style="padding:8px 10px;border-radius:10px;background:#ffffff;border:1px solid var(--border);font-size:11px;font-weight:700;color:var(--acc)">Workspace</div>
+      </div>
+
+      <pre class="code" style="margin:0;font-size:11px;line-height:1.5"># .claude/mcp/notion.md
+
+Server: notion
+Purpose: Let the agent search and read Notion content
+
+Capabilities:
+- search pages
+- read page content
+- query database rows
+
+Auth:
+- NOTION_API_KEY from environment
+
+Guardrails:
+- read-only by default
+- do not modify pages unless user explicitly asks
+
+Example tasks:
+- find project brief
+- read meeting notes
+- summarize database entries</pre>
+    </div>
+  </div>
+
+  <div class="card" style="padding:12px 14px;background:linear-gradient(135deg,var(--card),var(--acc-bg));border-left:4px solid var(--acc);margin-bottom:12px">
+    <div style="font-weight:800;font-size:13px;color:var(--txt);margin-bottom:6px">Why this makes MCP easier to understand</div>
+    <div style="font-size:12px;line-height:1.7;color:var(--txt)">
+      MCP is easier to explain when shown in two ways: as a <b>repo artifact</b> that documents a server, and as a <b>runtime connection</b> that lets the model use external tools and data consistently.
+    </div>
+  </div>
+
+  <div class="center" style="margin-bottom:8px">
+    <b style="color:var(--acc);font-size:14px">97M+ monthly SDK downloads · 5,800+ servers · 300+ clients</b>
+  </div>
+
+  <div class="center" style="font-size:11px;color:var(--sub)">
+    Anthropic → OpenAI (Mar 2025) → Google (Apr 2025) → Microsoft → Linux Foundation (Dec 2025)
+  </div>
+`;},
+
+
+// ========== S15: DESIGN PATTERNS ==========
+function(){var items=[["Too many arguments","Builder","Incrementally construct complex agent configs","blu"],["API mismatch","Adapter","Normalize different LLM APIs (OpenRouter, LiteLLM)","pur"],["If/else grows","Strategy","Swap reasoning strategies (CoT, ToT, ReAct) at runtime","grn"],["Pipeline steps","Chain","Compose sequential LLM calls with intermediate validation","acc"],["Need guardrails","Guard / Validator","'if text says delete all agents, do not run.' Input/output validation.","red"]];
+var h='<h2>When to Use Which Pattern</h2>';
+items.forEach(function(it){h+='<div class="problem-pattern" style="background:var(--'+it[3]+'-bg)"><div class="problem-box">'+it[0]+'</div><div class="pp-arrow">→</div><div class="pattern-box" style="background:var(--'+it[3]+'-bg);color:var(--'+it[3]+');border:1px solid var(--border)">'+it[1]+'</div><div class="pp-desc">'+it[2]+'</div></div>';});
+return h;},
+
+// ========== S16: REASONING ==========
+function(){var items=[["Chain of Thought","Linear","A → B → C → D. Step-by-step sequential reasoning.","Baseline","blu"],["Tree of Thoughts","Tree","Branch, evaluate (sure/maybe/impossible), prune, backtrack.","Game of 24: 4% → 74%","pur"],["Graph of Thoughts","Graph","Arbitrary DAG. Aggregation, refinement loops, splitting.","62% better than ToT, 31% cheaper","grn"],["Reflexion","Loop","Actor → Evaluator → Self-Reflection → Memory → Retry.","91% HumanEval (vs GPT-4's 80%)","acc"]];
+var h='<h2>Advanced Reasoning: CoT → ToT → GoT</h2><div class="grid2">';
+items.forEach(function(it){h+='<div class="card" style="border-left:3px solid var(--'+it[4]+')"><div style="font-weight:700;font-size:14px;color:var(--'+it[4]+')">'+it[0]+'</div><div style="font-size:10px;color:var(--dim);margin-bottom:4px">Shape: '+it[1]+'</div><div style="font-size:12px;color:var(--sub);margin-bottom:6px">'+it[2]+'</div><div style="font-size:12px;color:var(--grn);font-weight:600">📊 '+it[3]+'</div></div>';});
+return h+'</div>';},
+
+// ========== S17: GOOGLE EMBEDDINGS ==========
+function(){return `
+  <h2>Google Gemini Embeddings — From Tokens to Vector Space</h2>
+
+  <div class="grid2" style="align-items:start">
+    <div>
+      <div class="card" style="border-left:4px solid var(--blu)">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+          <div style="font-weight:800;color:var(--blu)">What this slide shows</div>
+          <span class="tag" style="background:var(--blu-bg);color:var(--blu);border:1px solid var(--border)">3D view = projection for humans</span>
+        </div>
+        <div style="font-size:13px;line-height:1.75;color:var(--txt)">
+          Embeddings convert input into a numeric vector so “similar meaning” sits closer in space.
+          The real vector is high-dimensional; the 3D plot is a visual projection so humans can understand the concept quickly.
+        </div>
+      </div>
+
+      <div class="card" style="border-left:4px solid var(--pur)">
+        <div style="font-weight:800;color:var(--pur);margin-bottom:8px">Why Google’s embedding story is interesting</div>
+        <div class="note-list">
+          <div class="note-item"><b>gemini-embedding-2-preview</b>: multimodal shared space for text, image, video, audio, and PDFs.</div>
+          <div class="note-item"><b>Flexible size</b>: embeddings can be shortened for storage / speed trade-offs.</div>
+          <div class="note-item"><b>Task-aware embeddings</b>: retrieval, classification, clustering, and similarity use cases can be optimized differently.</div>
+        </div>
+      </div>
+
+      <div class="card" style="border-left:4px solid var(--grn)">
+        <div style="font-weight:800;color:var(--grn);margin-bottom:8px">Why this matters for AI agents</div>
+        <div style="font-size:12px;line-height:1.75;color:var(--txt)">
+          Agents use embeddings to find the <b>right memory</b>, <b>right documents</b>, <b>right screenshots</b>, or <b>right code blocks</b>
+          before reasoning. In practice, embeddings improve RAG, semantic memory, routing, clustering, and multimodal search.
+        </div>
+      </div>
+
+      <div class="tip-box">
+        Good speaker line: “LLMs reason over tokens, but agents often search over vectors first.”
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+          <div style="font-weight:800;color:var(--acc)">Interactive View</div>
+          <span class="tag" style="background:var(--acc-bg);color:var(--acc);border:1px solid var(--border)">Looping demo</span>
+        </div>
+        <div id="embViewBox" style="border:1px solid var(--border);border-radius:12px;overflow:hidden;background:#000">
+          <video src="assets/gemini-2-multimodal-embeddings.mp4" autoplay muted loop playsinline controls style="width:100%;display:block"></video>
+        </div>
+      </div>
+
+      <div class="card" style="background:linear-gradient(135deg,var(--acc-bg),var(--pur-bg))">
+        <div style="font-weight:800;font-size:13px;color:var(--txt);margin-bottom:6px">Key takeaway</div>
+        <div style="font-size:12px;line-height:1.75;color:var(--txt)">
+          Better embeddings do not replace the LLM. They improve <b>what the agent can find</b> before the LLM plans, reasons, or calls tools.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:8px;font-size:10px;color:var(--sub);text-align:right">
+    Source theme: Google Gemini Embeddings / Vertex AI task-type embeddings
+  </div>
+`;},
+
+// ========== S17: SEARCH ==========
+function(){var items=[["BM25 (Sparse)","Fast exact-match keyword search. Best for specific terms, IDs.","Fast, interpretable, no embedding","Misses semantic similarity","blu"],["Vector (Dense)","Semantic embeddings find conceptual matches without shared words.","Understands meaning, paraphrases","Slower, needs embedding model","pur"],["Hybrid ★","Combine both. Industry best practice for production RAG.","92% recall / 88% precision","More complex infrastructure","grn"]];
+var h='<h2>Memory Retrieval: BM25 vs. Vector vs. Hybrid</h2><div class="grid3">';
+items.forEach(function(it){h+='<div class="card" style="border-left:3px solid var(--'+it[4]+')"><div style="font-weight:700;font-size:14px;color:var(--'+it[4]+')">'+it[0]+'</div><div style="font-size:11px;color:var(--sub);margin:6px 0 10px">'+it[1]+'</div><div style="font-size:11px;color:var(--grn)">✓ '+it[2]+'</div><div style="font-size:11px;color:var(--red)">✗ '+it[3]+'</div></div>';});
+return h+'</div><div style="font-size:11px;color:var(--sub);margin-top:10px;text-align:center">Top: Gemini Embedding 001 (free) · Cohere embed-v4 (multilingual) · OpenAI text-embedding-3-large</div>';},
+
+// ========== S18: BENCHMARKS ==========
+function(){var items=[["Claude Opus 4.5",80.9],["Claude Opus 4.6",80.8],["Gemini 3.1 Pro",80.6],["MiniMax M2.5",80.2],["GPT-5.2",80.0],["Kimi K2.5 (open)",76.8]];
+var h='<h2>Benchmarks: Where Agents Stand (Mar 2026)</h2><div style="font-size:12px;color:var(--acc);font-weight:600;margin-bottom:8px">SWE-Bench Verified</div><div class="bar-chart">';
+items.forEach(function(it,i){var w=(it[1]/82*100).toFixed(1);var bg=i===0?'linear-gradient(90deg,#d97706,#dc2626)':'var(--acc)';var op=i===0?1:Math.max(0.35,0.75-i*0.08);h+='<div class="bar-row"><div class="bar-label">'+it[0]+'</div><div class="bar-track"><div class="bar-fill" style="width:'+w+'%;background:'+bg+';opacity:'+op+'"><span class="bar-val">'+it[1]+'%</span></div></div></div>';});
+h+='</div><div class="insight-box">💡 Agent frameworks add 10-20 points over raw model scores. Scaffold choice matters enormously.</div><div style="margin-top:10px;font-size:12px;color:var(--txt)"><div>• Klarna: 2.3M convos/month, $40M savings — then rehired humans</div><div>• NASA: Claude Code planned 400m Mars rover route</div><div>• 16 Claude agents wrote a C compiler in Rust (~$20K)</div></div>';
+return h;},
+
+// ========== S19: SAFETY ==========
+function(){var items=[["ASI01","Agent Goal Hijack","Natural language redirects agent objectives"],["ASI02","Tool Misuse","Agents use legitimate tools unsafely"],["ASI03","Identity & Privilege Abuse","Credential escalation via agent"],["ASI04","Supply Chain Vulns","Compromised MCP servers, poisoned tools"],["ASI05","Unexpected Code Exec","AI-generated scripts with hidden commands"],["ASI06","Memory & RAG Poisoning","Corrupting stored knowledge"],["ASI07","Insecure Inter-Agent Comms","Spoofed agent identities"]];
+var h='<h2>Safety: OWASP Top 10 for Agentic AI</h2><div style="font-size:11px;color:var(--sub);margin-bottom:10px">OWASP, December 2025 — 100+ experts, NIST & Microsoft AI Red Team reviewed</div>';
+items.forEach(function(it){h+='<div class="owasp-row"><span class="owasp-code">'+it[0]+'</span><span class="owasp-name">'+it[1]+'</span><span class="owasp-desc">'+it[2]+'</span></div>';});
+return h+'<div class="insight-box">📝 Your note: "make sure we have guardrails — if text says delete all agents, do not run." This is ASI01 (Goal Hijack) in action.</div>';},
+
+// ========== S20: CONTEXT ENGINEERING ==========
+function(){var notes=["AI Agent = Model + Thinking + Flow","Context windows = RAM analogy, ~4 chars/token","manual switch → software controlled → natural language control","Caching repetitive information = good cost saving","OpenRouter — hosting models (Together AI, Venus AI)","Markdown is good text format for agents task read/write","Knowledge base + index file for all project files","Flat org for multi-agent flows","Pre-prompting is useful but limited"];
+var h='<h2>Context Engineering > Prompt Engineering</h2><div style="font-size:12px;color:var(--sub);margin-bottom:10px">From your Notion notes — key production insights:</div><div class="note-list">';
+notes.forEach(function(n){h+='<div class="note-item">'+n+'</div>';});
+return h+'</div><div class="card" style="margin-top:12px;border-left:3px solid var(--pur)"><div style="font-size:12px;color:var(--pur);font-weight:600">Anthropic\'s Advice:</div><div style="font-size:12px;color:var(--sub)">Organize prompts: &lt;background_information&gt;, &lt;instructions&gt;, ## Tool guidance, ## Output description. Use XML tags or Markdown headers.</div></div>';},
+
+// ========== S21: PROJECT 1 ==========
+function(){
+var dir=[
+'s3://agai-meeting-processing/',
+'|-- index.md                          # Org overview, project list, links',
+'|-- tools.md                          # MCP tool registry / API reference',
+'|-- company/',
+'|   |-- index.md                      # Company details and guidelines',
+'|   |-- guidelines/',
+'|   |   |-- company_policies.pdf',
+'|   |   |-- company_procedures.pdf',
+'|   |   `-- company_handbook.pdf',
+'|   |-- assets/',
+'|   |   `-- logo.png',
+'|   `-- services/',
+'|       |-- service1.pdf',
+'|       `-- service2.pdf',
+'|-- projects/',
+'|   |-- index.md',
+'|   `-- {project_id}/',
+'|       |-- metadata.json',
+'|       |-- meetings_vtt/',
+'|       |-- meeting_summary/',
+'|       |-- context_pack/',
+'|       |-- evidence_bundles/',
+'|       `-- logs/'
+];
+return '<h2>Project 1 - MeetingMinds (AI Agent to Process Meeting Notes)</h2><div style="font-size:12px;color:var(--sub);margin-bottom:10px">Showcasing how project development with AI agents looks in practice: flow, outputs, and clean repository structure.</div><div class="grid2" style="margin-bottom:12px"><div class="card" style="padding:12px"><div style="font-size:12px;color:var(--acc);font-weight:700;margin-bottom:8px">Initial Version: Context Ingestion and Planning</div><img src="assets/p1-s1.png" alt="Project 1 step 1" onclick="openImageViewer(\'assets/p1-s1.png\')" style="width:100%;border-radius:8px;border:1px solid var(--border);cursor:zoom-in"></div><div class="card" style="padding:12px"><div style="font-size:12px;color:var(--grn);font-weight:700;margin-bottom:8px">Final Production Version: Agent Execution and Output</div><img src="assets/p1-s2.png" alt="Project 1 step 2" onclick="openImageViewer(\'assets/p1-s2.png\')" style="width:100%;border-radius:8px;border:1px solid var(--border);cursor:zoom-in"></div></div><div class="card" style="padding:12px"><div style="font-size:12px;color:var(--blu);font-weight:700;margin-bottom:8px">Step 3: Recommended Directory Structure</div><pre class="code" style="margin:0">'+dir.join('\n')+'</pre><div style="font-size:11px;color:var(--sub);margin-top:8px">Tip: Keep context packs, evidence bundles, and logs versioned so agents can reason with reliable history.</div></div>';},
+
+// ========== S22: PROJECT 2 ==========
+function(){return `
+  <h2>Project 2 - AI Invoice Intake, Approval & Reminder Workflow</h2>
+
+  <div style="font-size:12px;color:var(--sub);margin-bottom:10px">
+    A practical finance-ops agentic workflow: document extraction, parallel verification, conditional human approval, database update, and proactive payment reminders.
+  </div>
+
+  <div class="card" style="padding:14px;border-left:4px solid var(--acc);background:linear-gradient(135deg,var(--card),#ffffff);margin-bottom:12px">
+    <div style="font-weight:800;font-size:13px;color:var(--txt);margin-bottom:10px">End-to-end flow</div>
+
+    <div style="display:grid;gap:8px">
+
+      <!-- Step 1 -->
+      <div style="padding:12px;border-radius:12px;background:var(--acc-bg);border:1px solid var(--border)">
+        <div style="font-size:12px;font-weight:800;color:var(--acc)">1. Receive invoice PDF by email</div>
+        <div style="font-size:11px;color:var(--txt);margin-top:4px">
+          Inbound invoice email arrives through AWS email receiving and enters the automation pipeline.
+        </div>
+        <div style="font-size:10px;color:var(--sub);margin-top:6px">Source: invoice sender → finance intake mailbox</div>
+      </div>
+
+      <div style="text-align:center;font-size:20px;color:var(--dim);font-weight:800">↓</div>
+
+      <!-- Step 2 -->
+      <div style="padding:12px;border-radius:12px;background:var(--blu-bg);border:1px solid var(--border)">
+        <div style="font-size:12px;font-weight:800;color:var(--blu)">2. Extract invoice fields with Textract</div>
+        <div style="font-size:11px;color:var(--txt);margin-top:4px">
+          Extract structured fields from the PDF for downstream validation and accounting actions.
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+          <span class="tag" style="background:#fff;color:var(--txt);border:1px solid var(--border)">Invoice No.</span>
+          <span class="tag" style="background:#fff;color:var(--txt);border:1px solid var(--border)">Date</span>
+          <span class="tag" style="background:#fff;color:var(--txt);border:1px solid var(--border)">Vendor / Party</span>
+          <span class="tag" style="background:#fff;color:var(--txt);border:1px solid var(--border)">Amount</span>
+          <span class="tag" style="background:#fff;color:var(--txt);border:1px solid var(--border)">Tax / Terms</span>
+          <span class="tag" style="background:#fff;color:var(--txt);border:1px solid var(--border)">Conditions</span>
+        </div>
+      </div>
+
+      <div style="text-align:center;font-size:20px;color:var(--dim);font-weight:800">↓</div>
+
+      <!-- Step 3 -->
+      <div style="padding:12px;border-radius:12px;background:var(--pur-bg);border:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+          <div style="font-size:12px;font-weight:800;color:var(--pur)">3. Run sub-agents in parallel</div>
+          <span class="tag" style="background:#ffffff;color:var(--pur);border:1px solid var(--border)">parallel checks</span>
+        </div>
+
+        <div class="grid2" style="gap:8px">
+          <div style="padding:10px;border-radius:10px;background:#ffffff;border:1px solid var(--border)">
+            <div style="font-size:11px;font-weight:800;color:var(--txt)">Duplicate / prior invoice check</div>
+            <div style="font-size:10px;color:var(--sub);margin-top:4px">Avoid duplicate posting or already-processed invoices</div>
+          </div>
+
+          <div style="padding:10px;border-radius:10px;background:#ffffff;border:1px solid var(--border)">
+            <div style="font-size:11px;font-weight:800;color:var(--txt)">Vendor / party verification</div>
+            <div style="font-size:10px;color:var(--sub);margin-top:4px">Match sender, vendor name, and expected party records</div>
+          </div>
+
+          <div style="padding:10px;border-radius:10px;background:#ffffff;border:1px solid var(--border)">
+            <div style="font-size:11px;font-weight:800;color:var(--txt)">Amount / date / terms validation</div>
+            <div style="font-size:10px;color:var(--sub);margin-top:4px">Check invoice number, due date, totals, taxes, and conditions</div>
+          </div>
+
+          <div style="padding:10px;border-radius:10px;background:#ffffff;border:1px solid var(--border)">
+            <div style="font-size:11px;font-weight:800;color:var(--txt)">Policy / approval routing</div>
+            <div style="font-size:10px;color:var(--sub);margin-top:4px">Decide if human approval is needed based on rules or low confidence</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align:center;font-size:20px;color:var(--dim);font-weight:800">↓</div>
+
+      <!-- Step 4 -->
+      <div style="padding:12px;border-radius:12px;background:var(--grn-bg);border:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+          <div style="font-size:12px;font-weight:800;color:var(--grn)">4. Conditional human approval in Slack</div>
+          <span class="tag" style="background:#ffffff;color:var(--grn);border:1px solid var(--border)">human-in-the-loop</span>
+        </div>
+        <div style="font-size:11px;color:var(--txt);margin-top:4px">
+          If confidence is low or policy thresholds are hit, send a Slack approval request before committing the invoice.
+        </div>
+      </div>
+
+      <div style="text-align:center;font-size:20px;color:var(--dim);font-weight:800">↓</div>
+
+      <!-- Step 5 -->
+      <div style="padding:12px;border-radius:12px;background:#ffffff;border:1px solid var(--border)">
+        <div style="font-size:12px;font-weight:800;color:var(--txt);margin-bottom:8px">5. Commit and notify downstream systems</div>
+
+        <div class="grid3" style="gap:8px">
+          <div style="padding:10px;border-radius:10px;background:var(--blu-bg);border:1px solid var(--border)">
+            <div style="font-size:11px;font-weight:800;color:var(--blu)">Enter into database</div>
+            <div style="font-size:10px;color:var(--txt);margin-top:4px">Create accounting / invoice record</div>
+          </div>
+
+          <div style="padding:10px;border-radius:10px;background:var(--acc-bg);border:1px solid var(--border)">
+            <div style="font-size:11px;font-weight:800;color:var(--acc)">Notify accounts head</div>
+            <div style="font-size:10px;color:var(--txt);margin-top:4px">Request verification / visibility</div>
+          </div>
+
+          <div style="padding:10px;border-radius:10px;background:var(--grn-bg);border:1px solid var(--border)">
+            <div style="font-size:11px;font-weight:800;color:var(--grn)">Confirm receipt to sender</div>
+            <div style="font-size:10px;color:var(--txt);margin-top:4px">Acknowledge invoice intake</div>
+          </div>
+
+          <div style="padding:10px;border-radius:10px;background:var(--pur-bg);border:1px solid var(--border)">
+            <div style="font-size:11px;font-weight:800;color:var(--pur)">Update payable / receivable</div>
+            <div style="font-size:10px;color:var(--txt);margin-top:4px">Classify upcoming payment or receivable</div>
+          </div>
+
+          <div style="padding:10px;border-radius:10px;background:var(--red-bg);border:1px solid var(--border)">
+            <div style="font-size:11px;font-weight:800;color:var(--red)">Create Outlook reminders</div>
+            <div style="font-size:10px;color:var(--txt);margin-top:4px">Schedule due-date reminders before payment date</div>
+          </div>
+
+          <div style="padding:10px;border-radius:10px;background:linear-gradient(135deg,var(--card),var(--acc-bg));border:1px solid var(--border)">
+            <div style="font-size:11px;font-weight:800;color:var(--txt)">Final outcome</div>
+            <div style="font-size:10px;color:var(--txt);margin-top:4px">Invoice recorded, tracked, approved, and followed up automatically</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="grid2" style="gap:12px">
+    <div class="card" style="padding:14px;border-left:4px solid var(--grn)">
+      <div style="font-size:13px;font-weight:800;color:var(--grn);margin-bottom:8px">Why this is a strong AI-agent use case</div>
+      <div style="font-size:12px;line-height:1.75;color:var(--txt)">
+        • Starts from messy real-world input: invoice PDFs via email<br>
+        • Uses document AI + structured extraction<br>
+        • Parallel sub-agents reduce latency and isolate checks<br>
+        • Human approval is inserted only when necessary<br>
+        • Ends with real operational actions, not just a summary
+      </div>
+    </div>
+
+    <div class="card" style="padding:14px;border-left:4px solid var(--acc)">
+      <div style="font-size:13px;font-weight:800;color:var(--acc);margin-bottom:8px">Best way to describe it in the presentation</div>
+      <div style="font-size:12px;line-height:1.75;color:var(--txt)">
+        Call it an <b>agentic invoice operations workflow</b> or <b>AI-powered invoice intake and approval system</b>.<br><br>
+        That framing is stronger than saying “fully autonomous finance agent,” because this design clearly includes
+        <b>parallel verification</b>, <b>policy checks</b>, and <b>human-in-the-loop approvals</b>.
+      </div>
+    </div>
+  </div>
+`;},
+
+// ========== S23: THANK YOU ==========
+function(){return `
+  <div style="display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:70vh;text-align:center">
+    <div style="font-size:14px;color:var(--sub);letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px"></div>
+    <h1 style="background:linear-gradient(135deg,#d97706,#dc2626,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:14px">Thank You</h1>
+    <div class="subtitle" style="max-width:760px">Appreciate your time and attention.</div>
+
+    <div class="card center" style="margin-top:22px;padding:22px 28px;max-width:760px;background:linear-gradient(135deg,var(--acc-bg),var(--pur-bg));border:1px solid var(--border)">
+      <div style="font-size:28px;font-weight:800;color:var(--acc);margin-bottom:6px">Q&A</div>
+      <div style="font-size:14px;color:var(--txt)">Questions, feedback, or discussion points are welcome.</div>
+    </div>
+  </div>
+`;},
+];
+
+// Helper for border colors
+function hsl(c){return "var(--"+c+")"}
+
+var times=["","1 min","5 min","","","6 min","","7 min","7 min","","5 min","5 min","7 min","","","5 min","","4 min","5 min","5 min","","3 min","3 min"];
+var hiddenSlideIndices=[5,19]; // Hide slides 6 and 18 (1-based) without removing code.
+var visibleSlideIndices=slides.map(function(_,i){return i;}).filter(function(i){return hiddenSlideIndices.indexOf(i)===-1;});
+var total=visibleSlideIndices.length;
+
+function render(){
+  var actualIndex=visibleSlideIndices[idx];
+  document.getElementById("slideContent").innerHTML=slides[actualIndex]();
+  document.getElementById("slideNum").textContent=idx+1;
+  document.getElementById("slideTotal").textContent=total;
+
+  document.getElementById("prevBtn").disabled=idx===0;
+  document.getElementById("nextBtn").disabled=idx===total-1;
+  var dotsEl=document.getElementById("dots");
+  dotsEl.innerHTML="";
+  for(var i=0;i<total;i++){
+    var d=document.createElement("span");
+    if(i===idx)d.className="active";
+    else if(i<idx)d.className="done";
+    (function(ii){d.onclick=function(){idx=ii;render();animateSlide();document.querySelector('.slide-area').scrollTop=0;};})(i);
+    dotsEl.appendChild(d);
+  }
+}
+
+function animateSlide(){var el=document.getElementById('slideContent');el.classList.remove('slide-animate');void el.offsetWidth;el.classList.add('slide-animate');}
+function next(){if(idx<total-1){idx++;render();animateSlide();document.querySelector('.slide-area').scrollTop=0;}}
+function prev(){if(idx>0){idx--;render();animateSlide();document.querySelector('.slide-area').scrollTop=0;}}
+function toggleFS(){document.getElementById("app").classList.toggle("fullscreen");}
+
+var viewerScale=1;
+var viewerPanX=0;
+var viewerPanY=0;
+var viewerDragging=false;
+var viewerDragStartX=0;
+var viewerDragStartY=0;
+
+function applyViewerTransform(){
+  var img=document.getElementById('imgViewerImage');
+  img.style.transform='translate('+viewerPanX+'px,'+viewerPanY+'px) scale('+viewerScale+')';
+  img.style.cursor=viewerScale>1?(viewerDragging?'grabbing':'grab'):'default';
+}
+
+function setViewerScale(scale){
+  viewerScale=Math.max(0.5,Math.min(4,scale));
+  if(viewerScale<=1){
+    viewerPanX=0;
+    viewerPanY=0;
+  }
+  applyViewerTransform();
+}
+function openImageViewer(src){
+  var viewer=document.getElementById('imgViewer');
+  var img=document.getElementById('imgViewerImage');
+  img.src=src;
+  viewer.classList.add('active');
+  viewerPanX=0;
+  viewerPanY=0;
+  viewerDragging=false;
+  setViewerScale(1);
+}
+function closeImageViewer(e){
+  if(e)e.stopPropagation();
+  viewerDragging=false;
+  document.getElementById('imgViewer').classList.remove('active');
+}
+function viewerBackdropClick(e){
+  if(e.target&&e.target.id==='imgViewer')closeImageViewer();
+}
+function zoomIn(e){if(e)e.stopPropagation();setViewerScale(viewerScale+0.2);}
+function zoomOut(e){if(e)e.stopPropagation();setViewerScale(viewerScale-0.2);}
+function resetZoom(e){if(e)e.stopPropagation();setViewerScale(1);}
+
+document.getElementById('imgViewerImage').addEventListener('dragstart',function(e){e.preventDefault();});
+
+document.getElementById('imgViewerStage').addEventListener('mousedown',function(e){
+  if(!document.getElementById('imgViewer').classList.contains('active')||viewerScale<=1)return;
+  viewerDragging=true;
+  viewerDragStartX=e.clientX-viewerPanX;
+  viewerDragStartY=e.clientY-viewerPanY;
+  applyViewerTransform();
+  e.preventDefault();
+});
+
+window.addEventListener('mousemove',function(e){
+  if(!viewerDragging)return;
+  viewerPanX=e.clientX-viewerDragStartX;
+  viewerPanY=e.clientY-viewerDragStartY;
+  applyViewerTransform();
+});
+
+window.addEventListener('mouseup',function(){
+  if(!viewerDragging)return;
+  viewerDragging=false;
+  applyViewerTransform();
+});
+
+document.getElementById('imgViewerStage').addEventListener('wheel',function(e){
+  if(!document.getElementById('imgViewer').classList.contains('active'))return;
+  e.preventDefault();
+  setViewerScale(viewerScale+(e.deltaY<0?0.12:-0.12));
+},{passive:false});
+
+document.addEventListener("keydown",function(e){
+  var viewerOpen=document.getElementById('imgViewer').classList.contains('active');
+  if(viewerOpen){
+    if(e.key==='+'||e.key==='='){e.preventDefault();zoomIn();}
+    if(e.key==='-'){e.preventDefault();zoomOut();}
+    if(e.key==='0'){e.preventDefault();resetZoom();}
+  }
+  if(viewerOpen&&(e.key==="ArrowRight"||e.key==="ArrowLeft"||e.key===" "))return;
+  if(e.key==="ArrowRight"||e.key===" "){e.preventDefault();next();}
+  if(e.key==="ArrowLeft"){e.preventDefault();prev();}
+  if(e.key==="f"||e.key==="F"){toggleFS();}
+  if(e.key==="Escape"){
+    if(document.getElementById('imgViewer').classList.contains('active'))closeImageViewer();
+    else document.getElementById("app").classList.remove("fullscreen");
+  }
+});
+
+render();
+</script>
+</body>
+</html>
