@@ -1790,7 +1790,7 @@ function(){return `
 
   <div class="grid2" style="gap:12px">
     <div class="card" style="padding:14px;border-left:4px solid var(--grn)">
-      <div style="font-size:13px;font-weight:800;color:var(--grn);margin-bottom:8px">Why this is a strong AI-agent use case</div>
+      <div style="font-size:13px;font-weight:800;color:var(--grn);margin-bottom:8px">AI-agent use case</div>
       <div style="font-size:12px;line-height:1.75;color:var(--txt)">
         • Starts from messy real-world input: invoice PDFs via email<br>
         • Uses document AI + structured extraction<br>
@@ -1801,9 +1801,9 @@ function(){return `
     </div>
 
     <div class="card" style="padding:14px;border-left:4px solid var(--acc)">
-      <div style="font-size:13px;font-weight:800;color:var(--acc);margin-bottom:8px">Best way to describe it in the presentation</div>
+      <div style="font-size:13px;font-weight:800;color:var(--acc);margin-bottom:8px">Takeaway:</div>
       <div style="font-size:12px;line-height:1.75;color:var(--txt)">
-        Call it an <b>agentic invoice operations workflow</b> or <b>AI-powered invoice intake and approval system</b>.<br><br>
+        This is an <b>agentic invoice operations workflow</b> or <b>AI-powered invoice intake and approval system</b>.<br><br>
         That framing is stronger than saying “fully autonomous finance agent,” because this design clearly includes
         <b>parallel verification</b>, <b>policy checks</b>, and <b>human-in-the-loop approvals</b>.
       </div>
@@ -1830,7 +1830,7 @@ function(){return `
 function hsl(c){return "var(--"+c+")"}
 
 var times=["","1 min","5 min","","","6 min","","7 min","7 min","","5 min","5 min","7 min","","","5 min","","4 min","5 min","5 min","","3 min","3 min"];
-var hiddenSlideIndices=[5,19]; // Hide slides 6 and 18 (1-based) without removing code.
+var hiddenSlideIndices=[5,15,16,19]; // Hide slides 6, 16, and 20 (1-based) without removing code.
 var visibleSlideIndices=slides.map(function(_,i){return i;}).filter(function(i){return hiddenSlideIndices.indexOf(i)===-1;});
 var total=visibleSlideIndices.length;
 
